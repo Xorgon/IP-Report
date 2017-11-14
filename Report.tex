@@ -28,7 +28,6 @@
 \subsection{Axis-Aligned Simple Wall}
 \section{Collision Detection}
 \section{Calculating Forces}
-Numerical integration...
 \subsection{Drag}
 \subsection{Gravity}
 \subsection{DEM Forces}
@@ -57,7 +56,7 @@ The implicit numerical integration method for equation \ref{eq:drag_acceleration
 \dot{u} = \dfrac{u_{n+1} - u_{n}}{\Delta t} = \dfrac{v - u_{n+1}}{\tau}
 \label{eq:implicit_drag_speed}
 \end{equation}
-Equation \ref{eq:implicit_drag_speed} can be rearranged to get an equation of the form $\dot{u} = f(u_{n})$ shown in equation \ref{eq:implicit_drag_acceleration}.
+Equation \ref{eq:implicit_drag_speed} can be rearranged to get an equation of the form $\dot{u} = f(u_{n})$ as shown in equation \ref{eq:implicit_drag_acceleration}.
 \begin{equation}
 \dot{u} = \dfrac{v - u_{n}}{\tau + \Delta t}
 \label{eq:implicit_drag_acceleration}
@@ -82,12 +81,12 @@ When these three methods are applied to the system they produce the results in f
 \dot{u} = \dfrac{u_{n+1} - u_{n}}{\Delta t} = \dfrac{v - u_{n+1}}{\tau} + \dot{u}_{e}
 \label{eq:drag_acceleration_with_other_accelerations}
 \end{equation}
-As before, equation \ref{eq:drag_acceleration_with_other_accelerations} can be rearranged to be in the form $\dot{u} = f(u_{n})$ as shown in \ref{eq:implicit_drag_acceleration_with_other_accelerations}.
+As before, equation \ref{eq:drag_acceleration_with_other_accelerations} can be rearranged to be in the form $\dot{u} = f(u_{n})$ as shown in equation \ref{eq:implicit_drag_acceleration_with_other_accelerations}.
 \begin{equation}
 \dot{u} = \dfrac{v - u_{n} + \tau \dot{u}_{e}}{\tau + \Delta t}
 \label{eq:implicit_drag_acceleration_with_other_accelerations}
 \end{equation}
-Equation \ref{eq:implicit_drag_acceleration_with_other_accelerations} can be applied to a particle falling under the effect of gravity through a still fluid. The results are shown in figure \ref{fig:fig:terminal_velocity_implicit_explicit}. As with the previous system, the explicit method has an average percentage difference of 2.05\% and the implicit method has an average percentage difference of 1.85\% when the timestep is $0.1 s$. This shows that the modified equation is consistent with equation \ref{eq:implicit_drag_acceleration}.
+Equation \ref{eq:implicit_drag_acceleration_with_other_accelerations} can be applied to a particle falling under the effect of gravity through a still fluid. The results are shown in figure \ref{fig:fig:terminal_velocity_implicit_explicit}. As with the previous system, the explicit method has an average percentage difference of 2.05\% and the implicit method has an average percentage difference of 1.85\% when the timestep is $0.1 s$. This shows that the accuracy of the modified equation is consistent with that of equation \ref{eq:implicit_drag_acceleration}.
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.75]{figures/TerminalVelocityImplicitExplicit.png}
