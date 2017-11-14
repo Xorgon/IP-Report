@@ -1,0 +1,32 @@
+\contentsline {chapter}{\numberline {1}Introduction}{2}
+\contentsline {section}{\numberline {1.1}Previous Work}{2}
+\contentsline {section}{\numberline {1.2}Project Goals}{2}
+\contentsline {chapter}{\numberline {2}The Discrete Element Method}{3}
+\contentsline {section}{\numberline {2.1}Forces}{3}
+\contentsline {section}{\numberline {2.2}Collision Detection}{3}
+\contentsline {section}{\numberline {2.3}Implicit/Explicit}{3}
+\contentsline {section}{\numberline {2.4}Rotation/Quaternions}{3}
+\contentsline {chapter}{\numberline {3}OpenCL and Graphics Processing Units}{4}
+\contentsline {chapter}{\numberline {4}Python Implementation}{5}
+\contentsline {section}{\numberline {4.1}Overview}{5}
+\contentsline {section}{\numberline {4.2}Element Types}{5}
+\contentsline {subsection}{\numberline {4.2.1}Particle}{5}
+\contentsline {subsection}{\numberline {4.2.2}Axis-Aligned Simple Wall}{5}
+\contentsline {section}{\numberline {4.3}Collision Detection}{5}
+\contentsline {section}{\numberline {4.4}Calculating Forces}{5}
+\contentsline {subsection}{\numberline {4.4.1}Drag}{5}
+\contentsline {subsection}{\numberline {4.4.2}Gravity}{5}
+\contentsline {subsection}{\numberline {4.4.3}DEM Forces}{5}
+\contentsline {section}{\numberline {4.5}Numerical Integration}{5}
+\contentsline {subsection}{\numberline {4.5.1}Velocity}{5}
+\contentsline {subsection}{\numberline {4.5.2}Position}{5}
+\contentsline {subsection}{\numberline {4.5.3}Method of Integrating Drag}{5}
+\contentsline {section}{\numberline {4.6}Verification (accuracy?)}{7}
+\contentsline {subsection}{\numberline {4.6.1}Settling Overlap}{7}
+\contentsline {subsubsection}{Timestep stability}{8}
+\contentsline {subsection}{\numberline {4.6.2}Terminal Velocity}{8}
+\contentsline {chapter}{\numberline {5}OpenCL Implementation}{10}
+\contentsline {chapter}{\numberline {6}Results}{11}
+\contentsline {section}{\numberline {6.1}Comparison between CPU and GPU}{11}
+\contentsline {chapter}{\numberline {7}Conclusion}{12}
+\contentsline {section}{\numberline {7.1}Further Work}{12}
