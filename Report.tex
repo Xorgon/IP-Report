@@ -86,7 +86,7 @@ As before, equation \ref{eq:drag_acceleration_with_other_accelerations} can be r
 \dot{u} = \dfrac{v - u_{n} + \tau \dot{u}_{e}}{\tau + \Delta t}
 \label{eq:implicit_drag_acceleration_with_other_accelerations}
 \end{equation}
-Equation \ref{eq:implicit_drag_acceleration_with_other_accelerations} can be applied to a particle falling under the effect of gravity through a still fluid. The results are shown in figure \ref{fig:fig:terminal_velocity_implicit_explicit}. As with the previous system, the explicit method has an average percentage difference of 2.05\% and the implicit method has an average percentage difference of 1.85\% when the timestep is $0.1 s$. This shows that the accuracy of the modified equation is consistent with that of equation \ref{eq:implicit_drag_acceleration}.
+Equation \ref{eq:implicit_drag_acceleration_with_other_accelerations} can be applied to a particle falling under the effect of gravity through a stationary fluid. The results are shown in figure \ref{fig:fig:terminal_velocity_implicit_explicit}. As with the previous system, the explicit method has an average percentage difference of 2.05\% and the implicit method has an average percentage difference of 1.85\% when the timestep is $0.1 s$. This shows that the accuracy of the modified equation is consistent with that of equation \ref{eq:implicit_drag_acceleration}.
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.75]{figures/TerminalVelocityImplicitExplicit.png}
@@ -128,7 +128,9 @@ This result can also be compared for varying timesteps to asses the stability of
 \end{figure}
 \subsection{Terminal Velocity}
 As mentioned in [ref], integrate and compare with different timesteps.
-
+\subsection{Timestep Stability}
+Collisions go boom if timestep is too high etc. <Test against bouncing or something>
+This can be spotted and logged if $E_{k}$ is higher after collision than before.
 \chapter{OpenCL Implementation}
 \chapter{Results}
 \section{Comparison between CPU and GPU}

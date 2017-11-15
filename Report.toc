@@ -25,6 +25,7 @@
 \contentsline {subsection}{\numberline {4.6.1}Settling Overlap}{7}
 \contentsline {subsubsection}{Timestep stability}{8}
 \contentsline {subsection}{\numberline {4.6.2}Terminal Velocity}{8}
+\contentsline {subsection}{\numberline {4.6.3}Timestep Stability}{8}
 \contentsline {chapter}{\numberline {5}OpenCL Implementation}{10}
 \contentsline {chapter}{\numberline {6}Results}{11}
 \contentsline {section}{\numberline {6.1}Comparison between CPU and GPU}{11}
