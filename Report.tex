@@ -8,6 +8,7 @@
 \usepackage[section]{placeins}
 \usepackage{graphicx}
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{tikz}
 \author{Elijah Andrews}
 \title{Implementing the Discrete Element Method with OpenCL for GPUs}
 \begin{document}
@@ -23,17 +24,37 @@
 \chapter{OpenCL and Graphics Processing Units}
 \chapter{Python Implementation}
 \section{Overview}
+An initial implementation of the Discrete Element Method has been done in Python. The objective of which is to gain an understanding of the DEM and any computational difficulties. Python has been chosen for its simplicity and ease of implementation for a testing environment.
 \section{Element Types}
+Different element types are required for different types of geometry and particle. For the Python implementation the two simplest have been chosen, a spherical particle and an axis-aligned wall.
 \subsection{Particle}
+The basic particle element is a spherical particle with pre-determined properties. These properties include initial position, initial velocity, diameter, density, fluid viscosity, and functions for fluid velocity and gravity. All of these properties can be set upon instantiation of each particle object and so can be easily modified for a variety of different simulations.
+\\There are two objects for particles, the main object, 'Particle', tracks a full particle state history which is very memory intensive and unnecessary for most applications. The second object, 'LowMemParticle', inherits from 'Particle' and only keeps track of the current state and, during iteration, one future state.
+\\The particle is iterated using the function call 'Particle.iterate()'. This passes a $\Delta t$ to the particle object and iterates the velocity and position. The methods used for integrating these properties are discussed in section \ref{sec:Numerical Integration}.
 \subsection{Axis-Aligned Simple Wall}
-\section{Collision Detection}
+The basic wall element is an axis-aligned simple wall. This object is defined by two points, minimum and maximum, that must lie in the same plane. From them a rectangle is formed. A normal is calculated for the wall and stored in the object to save time in collision calculations. The wall is treated as fixed, eliminating the need for complex material properties or calculation of motion.
+\section{Collisions}
+\subsection{Collision Detection}
+Broad phase collision detection uses the simple spatial zoning technique described in %TODO Reference
+\subsection{Collision Calculation}
+Collisions are then resolved...
 \section{Calculating Forces}
 \subsection{Drag}
 \subsection{Gravity}
 \subsection{DEM Forces}
-\section{Numerical Integration}
+\section{Numerical Integration} \label{sec:Numerical Integration}
 \subsection{Velocity}
+Velocity is iterated with equation \ref{eq:particle_velocity_iteration} where $\dot{u}$ is the acceleration obtained from the function call 'Particle.get{\_}accel()'.
+\begin{equation}
+u_{n+1} = u_{n} + \dot{u} \Delta t
+\label{eq:particle_velocity_iteration}
+\end{equation}
 \subsection{Position}
+Position is iterated with equation \ref{eq:particle_position_iteration}.
+\begin{equation}
+x_{n+1} = x_{n} + \dfrac{u_{n+1} + u_{n}}{2}\Delta t 
+\label{eq:particle_position_iteration}
+\end{equation}
 \subsection{Method of Integrating Drag}
 There are three different methods of integrating drag. Firstly, there is the analytical solution, this is the exact solution to the model but cannot be done easily computationally. Secondly, there is the explicit numerical solution, this takes the current state and estimates the future state. Thirdly, there is the implicit numerical solution, this assumes the future state and integrates accordingly.
 For a simple system with constant flow speed and no gravity, the system acceleration is described by equation \ref{eq:drag_acceleration}.
@@ -81,7 +102,7 @@ When these three methods are applied to the system they produce the results in f
 \dot{u} = \dfrac{u_{n+1} - u_{n}}{\Delta t} = \dfrac{v - u_{n+1}}{\tau} + \dot{u}_{e}
 \label{eq:drag_acceleration_with_other_accelerations}
 \end{equation}
-As before, equation \ref{eq:drag_acceleration_with_other_accelerations} can be rearranged to be in the form $\dot{u} = f(u_{n})$ as shown in equation \ref{eq:implicit_drag_acceleration_with_other_accelerations}.
+As before, equation \ref{eq:drag_acceleration_with_other_accelerations} can be rearranged to be in the form $\dot{u} = f(u_{n})$ as shown in equation \ref{eq:implicit_drag_acceleration_with_other_accelerations}. The derivation of this can be found in appendix \ref{sec:implicit_drag_accel_derivation}.
 \begin{equation}
 \dot{u} = \dfrac{v - u_{n} + \tau \dot{u}_{e}}{\tau + \Delta t}
 \label{eq:implicit_drag_acceleration_with_other_accelerations}
@@ -93,14 +114,22 @@ Equation \ref{eq:implicit_drag_acceleration_with_other_accelerations} can be app
 \caption{A graph of particle speed against time for each method of integration using equation \ref{eq:implicit_drag_acceleration_with_other_accelerations}.}
 \label{fig:fig:terminal_velocity_implicit_explicit}
 \end{figure}
-\section{Verification (accuracy?)}
+\section{Verification}
 To asses the accuracy of the implementation a series of cases have been tested and compared to analytical solutions of the model.
 \subsection{Settling Overlap}
 In this case two particles are used. The first particle is an ordinary particle acting under the effects of gravity. The second particle, placed below the first particle, is a particle with quasi-infinite density without being affected by gravity. As time increases the first particle bounces on the second particle until it eventually comes to rest with some overlap with the second particle.\\
 \begin{figure}[!htb]
 \centering
-\includegraphics[scale=0.75]{figures/ParticleRestingOnOtherParticle.png}
-\caption{A particle, under the effect of gravity, resting upon a second particle of infinite density, unaffected by gravity.}
+\begin{tikzpicture}
+\filldraw[color=black, fill=gray, thick] circle (1);
+\draw  (0, 1.9) circle (1);
+\draw (0, 1) -- (1.5, 1);
+\draw (0, 0.9) -- (1.5, 0.9);
+\draw[->] (1.4, 1.5) -- (1.4, 1);
+\draw[->] (1.4, 0.4) -- (1.4, 0.9);
+\filldraw[black] (1.4, 1.2) node[anchor=west] {$\delta$};
+\end{tikzpicture}
+\caption{A particle, under the effect of gravity, resting upon a second particle of infinite density, unaffected by gravity. Overlap, $\delta$, is labelled and exaggerated for clarity.}
 \end{figure}
 \\For the particle to be at rest the particle's gravity must be equal to the normal force from the DEM.
 \begin{equation}
@@ -136,4 +165,15 @@ This can be spotted and logged if $E_{k}$ is higher after collision than before.
 \section{Comparison between CPU and GPU}
 \chapter{Conclusion}
 \section{Further Work}
+\appendix
+\chapter{Derivations}
+\section{Equation \ref{eq:implicit_drag_acceleration_with_other_accelerations}}
+\label{sec:implicit_drag_accel_derivation}
+\begin{align}
+\dot{u} &= \dfrac{v - u}{\tau} + \dot{u}_{e}
+\\\dfrac{u_{n+1} - u_{n}}{\Delta t} &= \dfrac{v - u_{n+1}}{\tau} + \dot{u}_{e}
+\\u_{n+1} &= \dfrac{\dfrac{v}{\tau} + \dfrac{u_{n}}{\Delta t} + \dot{u}_{e}}{\dfrac{1}{\Delta t} + \dfrac{1}{\tau}}
+\\\dfrac{u_{n+1} - u_{n}}{\Delta t} &= \dfrac{\Bigg(\dfrac{\dfrac{v}{\tau} + \dfrac{u_{n}}{\Delta t} + \dot{u}_{e}}{\dfrac{1}{\Delta t} + \dfrac{1}{\tau}}\Bigg) - u_{n}}{\Delta t}
+\\\dot{u} &= \dfrac{v - u_{n} + \tau \dot{u}_{e}}{\tau + \Delta t}
+\end{align}
 \end{document}

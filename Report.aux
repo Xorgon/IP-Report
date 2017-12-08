@@ -21,45 +21,55 @@
 \@writefile{toc}{\contentsline {section}{\numberline {4.2}Element Types}{5}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}Particle}{5}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}Axis-Aligned Simple Wall}{5}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.3}Collision Detection}{5}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.4}Calculating Forces}{5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.1}Drag}{5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.2}Gravity}{5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.3}DEM Forces}{5}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.5}Numerical Integration}{5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.1}Velocity}{5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.2}Position}{5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.3}Method of Integrating Drag}{5}}
-\newlabel{eq:drag_acceleration}{{4.1}{5}}
-\newlabel{eq:analytical_drag_speed}{{4.2}{5}}
-\newlabel{eq:explicit_drag_speed}{{4.3}{5}}
-\newlabel{eq:implicit_drag_speed}{{4.4}{5}}
-\newlabel{eq:implicit_drag_acceleration}{{4.5}{6}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.1}{\ignorespaces A graph of particle speed against time for the three methods of integration.\relax }}{6}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}Collisions}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.1}Collision Detection}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}Collision Calculation}{6}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}Calculating Forces}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.1}Drag}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.2}Gravity}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4.3}DEM Forces}{6}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.5}Numerical Integration}{6}}
+\newlabel{sec:Numerical Integration}{{4.5}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.1}Velocity}{6}}
+\newlabel{eq:particle_velocity_iteration}{{4.1}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.2}Position}{6}}
+\newlabel{eq:particle_position_iteration}{{4.2}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5.3}Method of Integrating Drag}{6}}
+\newlabel{eq:drag_acceleration}{{4.3}{6}}
+\newlabel{eq:analytical_drag_speed}{{4.4}{6}}
+\newlabel{eq:explicit_drag_speed}{{4.5}{6}}
+\newlabel{eq:implicit_drag_speed}{{4.6}{6}}
+\newlabel{eq:implicit_drag_acceleration}{{4.7}{6}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.1}{\ignorespaces A graph of particle speed against time for the three methods of integration.\relax }}{7}}
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:particle_speed_for_different_integrations}{{4.1}{6}}
-\newlabel{eq:drag_acceleration_with_other_accelerations}{{4.6}{6}}
-\newlabel{eq:implicit_drag_acceleration_with_other_accelerations}{{4.7}{6}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.2}{\ignorespaces A graph of average percentage difference between the numerical method and analytical solution against varying timestep.\relax }}{7}}
-\newlabel{fig:avg_percent_diff_against_timestep}{{4.2}{7}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.3}{\ignorespaces A graph of particle speed against time for each method of integration using equation 4.7\hbox {}.\relax }}{7}}
-\newlabel{fig:fig:terminal_velocity_implicit_explicit}{{4.3}{7}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.6}Verification (accuracy?)}{7}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.1}Settling Overlap}{7}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.4}{\ignorespaces A particle, under the effect of gravity, resting upon a second particle of infinite density, unaffected by gravity.\relax }}{8}}
-\@writefile{toc}{\contentsline {subsubsection}{Timestep stability}{8}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.2}Terminal Velocity}{8}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.3}Timestep Stability}{8}}
-\@writefile{lof}{\contentsline {figure}{\numberline {4.5}{\ignorespaces A graph of overlap percentage error against time step.\relax }}{9}}
-\newlabel{fig:overlap_percentage_error_against_timestep}{{4.5}{9}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {5}OpenCL Implementation}{10}}
+\newlabel{fig:particle_speed_for_different_integrations}{{4.1}{7}}
+\newlabel{eq:drag_acceleration_with_other_accelerations}{{4.8}{7}}
+\newlabel{eq:implicit_drag_acceleration_with_other_accelerations}{{4.9}{7}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.2}{\ignorespaces A graph of average percentage difference between the numerical method and analytical solution against varying timestep.\relax }}{8}}
+\newlabel{fig:avg_percent_diff_against_timestep}{{4.2}{8}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.3}{\ignorespaces A graph of particle speed against time for each method of integration using equation 4.9\hbox {}.\relax }}{8}}
+\newlabel{fig:fig:terminal_velocity_implicit_explicit}{{4.3}{8}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.6}Verification}{9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.1}Settling Overlap}{9}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.4}{\ignorespaces A particle, under the effect of gravity, resting upon a second particle of infinite density, unaffected by gravity. Overlap, $\delta $, is labelled and exaggerated for clarity.\relax }}{9}}
+\@writefile{toc}{\contentsline {subsubsection}{Timestep stability}{9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.2}Terminal Velocity}{9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6.3}Timestep Stability}{9}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.5}{\ignorespaces A graph of overlap percentage error against time step.\relax }}{10}}
+\newlabel{fig:overlap_percentage_error_against_timestep}{{4.5}{10}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}OpenCL Implementation}{11}}
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {chapter}{\numberline {6}Results}{11}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {6}Results}{12}}
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {section}{\numberline {6.1}Comparison between CPU and GPU}{11}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {7}Conclusion}{12}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.1}Comparison between CPU and GPU}{12}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {7}Conclusion}{13}}
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {section}{\numberline {7.1}Further Work}{12}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.1}Further Work}{13}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {A}Derivations}{14}}
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\@writefile{toc}{\contentsline {section}{\numberline {A.1}Equation 4.9\hbox {}}{14}}
+\newlabel{sec:implicit_drag_accel_derivation}{{A.1}{14}}
