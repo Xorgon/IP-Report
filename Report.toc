@@ -22,12 +22,12 @@
 \contentsline {section}{\numberline {4.5}Numerical Integration}{6}
 \contentsline {subsection}{\numberline {4.5.1}Velocity}{6}
 \contentsline {subsection}{\numberline {4.5.2}Position}{6}
-\contentsline {subsection}{\numberline {4.5.3}Method of Integrating Drag}{6}
+\contentsline {subsection}{\numberline {4.5.3}Method of Integrating Drag}{7}
 \contentsline {section}{\numberline {4.6}Verification}{9}
 \contentsline {subsection}{\numberline {4.6.1}Settling Overlap}{9}
-\contentsline {subsubsection}{Timestep stability}{9}
-\contentsline {subsection}{\numberline {4.6.2}Terminal Velocity}{9}
-\contentsline {subsection}{\numberline {4.6.3}Timestep Stability}{9}
+\contentsline {subsubsection}{Timestep stability}{10}
+\contentsline {subsection}{\numberline {4.6.2}Terminal Velocity}{10}
+\contentsline {subsection}{\numberline {4.6.3}Timestep Stability}{10}
 \contentsline {chapter}{\numberline {5}OpenCL Implementation}{11}
 \contentsline {chapter}{\numberline {6}Results}{12}
 \contentsline {section}{\numberline {6.1}Comparison between CPU and GPU}{12}
