@@ -12,8 +12,8 @@
 \contentsline {section}{\numberline {4.2}Element Types}{5}
 \contentsline {subsection}{\numberline {4.2.1}Particle}{5}
 \contentsline {subsection}{\numberline {4.2.2}Axis-Aligned Simple Wall}{5}
-\contentsline {section}{\numberline {4.3}Collisions}{6}
-\contentsline {subsection}{\numberline {4.3.1}Collision Detection}{6}
+\contentsline {section}{\numberline {4.3}Collisions}{5}
+\contentsline {subsection}{\numberline {4.3.1}Collision Detection}{5}
 \contentsline {subsection}{\numberline {4.3.2}Collision Calculation}{6}
 \contentsline {section}{\numberline {4.4}Calculating Forces}{6}
 \contentsline {subsection}{\numberline {4.4.1}Drag}{6}

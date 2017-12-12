@@ -19,6 +19,8 @@
 \chapter{The Discrete Element Method}
 \section{Forces}
 \section{Collision Detection}
+It is most efficient to have the control volumes as small as possible because this reduces the number of particles in neighbouring control volumes. Control volumes must be at least as large as the largest particle to ensure that neighbouring control volumes contain all possible collisions. For monodisperse particle populations this means that the control volumes should be the same size as the particles. For polydisperse particle populations this means that the control volumes should be the size of the largest particle in the population. As mentioned in %TODO Reference
+this can decrease efficiency for statistical distributions of particle sizes.
 \section{Implicit/Explicit}
 \section{Rotation/Quaternions}
 \chapter{OpenCL and Graphics Processing Units}
@@ -35,7 +37,8 @@ The basic particle element is a spherical particle with pre-determined propertie
 The basic wall element is an axis-aligned simple wall. This object is defined by two points, minimum and maximum, that must lie in the same plane. From them a rectangle is formed. A normal is calculated for the wall and stored in the object to save time in collision calculations. The wall is treated as fixed, eliminating the need for complex material properties or calculation of motion.
 \section{Collisions}
 \subsection{Collision Detection}
-Broad phase collision detection uses the simple spatial zoning technique described in %TODO Reference
+Broad phase collision detection uses the simple spatial zoning technique described in Tuley\cite{tuley}. This approach has been chosen because it is quick and simple to implement. Other options were considered for this implementation but the benefits of using them were far outweighed by the complexity that using them would add to the overall algorithm. Since the initial Python implementation will not be fast anyway it was not deemed necessary to implement optimised algorithms at this stage.
+\\The domain is represented by a three dimensional array where each entry is a control volume. The control volume is a list of particles in its bounds. The list of particles is iterated over and each particle assigns itself to the correct control volume. This results in a three dimensional array where each control volume has all of the particles within its bounds as an array. Collision objects are then created for each pair of particles in the same, or neighbouring, control volumes. This approach reduces the problem from $O(N^{2})$ to $O(N)$. %TODO Add figure showing this.
 \subsection{Collision Calculation}
 Collisions are then resolved...
 \section{Calculating Forces}
@@ -176,4 +179,6 @@ This can be spotted and logged if $E_{k}$ is higher after collision than before.
 \\\dfrac{u_{n+1} - u_{n}}{\Delta t} &= \dfrac{\Bigg(\dfrac{\dfrac{v}{\tau} + \dfrac{u_{n}}{\Delta t} + \dot{u}_{e}}{\dfrac{1}{\Delta t} + \dfrac{1}{\tau}}\Bigg) - u_{n}}{\Delta t}
 \\\dot{u} &= \dfrac{v - u_{n} + \tau \dot{u}_{e}}{\tau + \Delta t}
 \end{align}
+\bibliography{references}
+\bibliographystyle{unsrt}
 \end{document}
