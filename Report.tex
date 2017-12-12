@@ -5,6 +5,7 @@
 \usepackage{amssymb}
 \usepackage[labelfont=bf]{caption}
 \usepackage{float}
+\usepackage{listings}
 \usepackage[section]{placeins}
 \usepackage{graphicx}
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
@@ -45,12 +46,18 @@ Broad phase collision detection uses the simple spatial zoning technique describ
 \caption{This graph shows that the simple spatial zoning technique reduces the problem from $O(N^{2})$ down to almost $O(N)$.}
 \label{fig:run_time_against_N_python}
 \end{figure}
-\subsection{Collision Calculation}
-Collisions are then resolved...
+\subsection{Collision Resolution}
+After an array of collisions has been generated they are iterated over and each collision is resolved. First, the distance between particles is calculated to determine if they are in contact. Often this reveals that they are not in contact and the calculation ends there. If particles are in contact then collision forces are determined.
+\\In this initial Python implementation only the simple normal and tangential contact forces are calculated. These are enough to run sufficient initial test cases.
 \section{Calculating Forces}
+There are three categories of forces used in this implementation. These are drag (particle-fluid interaction), gravity, and DEM forces.
 \subsection{Drag}
+The drag forces are determined using Stokes' law as discussed in %TODO Reference
+This is calculated using a flow field calculation function that is passed into the Particle object upon instantiation. The particle then calls this function as part of its get\_accel() function. This allows a variety of flow field functions to be used without modifying the Particle object code. The default for this function is a perfectly stationary flow.
 \subsection{Gravity}
+Gravity is treated in a similar manner to drag. A gravity function can be passed into the Particle object upon instantiation. Although this defaults to a simple -9.81$ms^{-1}$, it can be chosen to simulate a rotating frame of reference or other complex configurations. A rotating frame of reference has been implemented in the ``gravity\_shift\_closed\_box'' example simulation. %TODO Reference github
 \subsection{DEM Forces}
+The DEM forces that are calculated in collisions are stored in an array within the Particle object. When the particle is iterated the array is added together and used in the integration calculation. After this calculation the array is cleared so that forces don't get incorrectly added multiple times. This configuration makes it simple to add and remove forces to the simulation whenever necessary and could also be used in general to add any force to the particle.
 \section{Numerical Integration} \label{sec:Numerical Integration}
 \subsection{Velocity}
 Velocity is iterated with equation \ref{eq:particle_velocity_iteration} where $\dot{u}$ is the acceleration obtained from the function call 'Particle.get{\_}accel()'.
@@ -164,12 +171,53 @@ This result can also be compared for varying timesteps to asses the stability of
 \caption{A graph of overlap percentage error against time step.}
 \label{fig:overlap_percentage_error_against_timestep}
 \end{figure}
-\subsection{Terminal Velocity}
-As mentioned in [ref], integrate and compare with different timesteps.
 \subsection{Timestep Stability}
-Collisions go boom if timestep is too high etc. <Test against bouncing or something>
+Collisions go boom if timestep is too high etc. %<Test against bouncing or something>
+The stiffer the collisions the smaller the timestep must be to maintain physical results.
 This can be spotted and logged if $E_{k}$ is higher after collision than before.
+%TODO Run a simulation of timestep against stiffness.
 \chapter{OpenCL Implementation}
+\section{Data Structures}
+As the C language does not support objects, the objects used in the Python implementation must be simplified into data structures and separate functions. Most of the calculations that were done in the object functions will now be done within the kernels.
+\subsection{Particle}
+\subsection{Collision}
+\subsection{Buffers}
+To access the data from the device it must be passed into a buffer. None of the structure data is passed into the buffer so the device must have the same definition of the structure as the host. This is problematic as the host and device have different compilers. To work around this problem the host and device structures are written with members in descending order of size. In addition padding has been added to the host code since the alignment specifier is apparently insufficient to ensure correct alignment. The alignment attribute specifier is also not the same between different compilers so ``if defined'' statements are implemented for both Visual Studio and GCC compilers. The code for these definitions is shown in figure \ref{fig:struct_definitions}.
+
+\begin{figure}[!ht]
+Host:
+\begin{lstlisting}[language=C]
+typedef struct {
+    cl_float3 pos;
+    cl_float3 vel;
+    cl_float3 forces;
+    cl_ulong particle_id;
+    cl_float particle_diameter;
+    cl_float density;
+    cl_float fluid_viscosity;
+    cl_char padding[56];
+// Structure memory alignment for Visual Studio and GCC compilers.
+#if defined(_MSC_VER)
+} __declspec(align(128)) particle;
+#elif defined(__GNUC) || defined(__GNUG__)
+} __attribute__((aligned (128))) particle;
+#endif
+\end{lstlisting}
+Device:
+\begin{lstlisting}[language=C]
+typedef struct {
+    float3 pos;
+    float3 vel;
+    float3 forces;
+    ulong particle_id;
+    float particle_diameter;
+    float density;
+    float fluid_viscosity;
+} __attribute__ ((aligned (128))) particle;
+\end{lstlisting}
+\caption{Host and device definitions of the particle structure.}
+\label{fig:struct_definitions}
+\end{figure}
 \chapter{Results}
 \section{Comparison between CPU and GPU}
 \chapter{Conclusion}

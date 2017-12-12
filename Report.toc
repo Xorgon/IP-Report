@@ -14,24 +14,27 @@
 \contentsline {subsection}{\numberline {4.2.2}Axis-Aligned Simple Wall}{5}
 \contentsline {section}{\numberline {4.3}Collisions}{5}
 \contentsline {subsection}{\numberline {4.3.1}Collision Detection}{5}
-\contentsline {subsection}{\numberline {4.3.2}Collision Calculation}{6}
+\contentsline {subsection}{\numberline {4.3.2}Collision Resolution}{6}
 \contentsline {section}{\numberline {4.4}Calculating Forces}{6}
 \contentsline {subsection}{\numberline {4.4.1}Drag}{6}
 \contentsline {subsection}{\numberline {4.4.2}Gravity}{6}
-\contentsline {subsection}{\numberline {4.4.3}DEM Forces}{6}
-\contentsline {section}{\numberline {4.5}Numerical Integration}{6}
-\contentsline {subsection}{\numberline {4.5.1}Velocity}{6}
-\contentsline {subsection}{\numberline {4.5.2}Position}{6}
+\contentsline {subsection}{\numberline {4.4.3}DEM Forces}{7}
+\contentsline {section}{\numberline {4.5}Numerical Integration}{7}
+\contentsline {subsection}{\numberline {4.5.1}Velocity}{7}
+\contentsline {subsection}{\numberline {4.5.2}Position}{7}
 \contentsline {subsection}{\numberline {4.5.3}Method of Integrating Drag}{7}
-\contentsline {section}{\numberline {4.6}Verification}{9}
-\contentsline {subsection}{\numberline {4.6.1}Settling Overlap}{9}
+\contentsline {section}{\numberline {4.6}Verification}{10}
+\contentsline {subsection}{\numberline {4.6.1}Settling Overlap}{10}
 \contentsline {subsubsection}{Timestep stability}{10}
-\contentsline {subsection}{\numberline {4.6.2}Terminal Velocity}{10}
-\contentsline {subsection}{\numberline {4.6.3}Timestep Stability}{10}
-\contentsline {chapter}{\numberline {5}OpenCL Implementation}{11}
-\contentsline {chapter}{\numberline {6}Results}{12}
-\contentsline {section}{\numberline {6.1}Comparison between CPU and GPU}{12}
-\contentsline {chapter}{\numberline {7}Conclusion}{13}
-\contentsline {section}{\numberline {7.1}Further Work}{13}
-\contentsline {chapter}{\numberline {A}Derivations}{14}
-\contentsline {section}{\numberline {A.1}Equation 4.9\hbox {}}{14}
+\contentsline {subsection}{\numberline {4.6.2}Timestep Stability}{10}
+\contentsline {chapter}{\numberline {5}OpenCL Implementation}{12}
+\contentsline {section}{\numberline {5.1}Data Structures}{12}
+\contentsline {subsection}{\numberline {5.1.1}Particle}{12}
+\contentsline {subsection}{\numberline {5.1.2}Collision}{12}
+\contentsline {subsection}{\numberline {5.1.3}Buffers}{12}
+\contentsline {chapter}{\numberline {6}Results}{14}
+\contentsline {section}{\numberline {6.1}Comparison between CPU and GPU}{14}
+\contentsline {chapter}{\numberline {7}Conclusion}{15}
+\contentsline {section}{\numberline {7.1}Further Work}{15}
+\contentsline {chapter}{\numberline {A}Derivations}{16}
+\contentsline {section}{\numberline {A.1}Equation 4.9\hbox {}}{16}
