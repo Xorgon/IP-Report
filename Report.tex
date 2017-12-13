@@ -218,6 +218,35 @@ typedef struct {
 \caption{Host and device definitions of the particle structure.}
 \label{fig:struct_definitions}
 \end{figure}
+\section{Kernels}
+The main calculations for this implementation are performed on the device. This means that the program must be separated into kernels to be passed over a set of data.
+\subsection{Collision Detection}
+\subsection{Collision Resolution}
+The collision resolution kernel is actually separated into multiple kernels for different types of collision (particle-particle and particle-wall) however the behaviour of these kernels is almost identical. For this discussion we will use the particle-particle kernel as an example. The kernel takes a pointer to an array of collision structures and a pointer to the array of particles. The DEM collision force calculations are run for each collision and the forces are added to the DEM forces vector in the relevant particle structures. This approach has been chosen because it is easier to sum the forces as they are calculated rather than attempt to predict the length of the necessary force array to store each force separately as in the Python implementation.
+\\This approach causes a serious problem as it is possible that multiple collision kernels will need to write data to the same particle at the same time. The solution to this is to use the atomic operations available in OpenCL. Unfortunately, OpenCL only natively supports full atomic operations for int and unsigned int data types. OpenCL does support an exchange atomic operator for single precision floats, but this is not the best approach for doing atomic arithmetic for floats.
+\\An approach for doing atomic addition (as is necessary in this case) is presented in %TODO Reference website
+The code is shown in figure \ref{fig:atomic_float_addition}. This approach uses the comparison exchange atomic operator by creating a union of the floats with unsigned ints. This works well because the bits being exchanged are the same for the float and unsigned int and actual atomic arithmetic is not necessary so the difference between the data types doesn't matter. Thus the new value is calculated and if the value used to calculate it has changed in that time the calculation is repeated with the updated value.
+\begin{figure}[!ht]
+\begin{lstlisting}[language=C]
+ _INLINE_ void atomicAdd_g_f(volatile __global float *addr, float val)
+   {
+       union{
+           unsigned int u32;
+           float        f32;
+       } next, expected, current;
+   	current.f32    = *addr;
+       do{
+   	   expected.f32 = current.f32;
+           next.f32     = expected.f32 + val;
+   		current.u32  = atomic_cmpxchg( (volatile __global unsigned int *)addr, 
+                               expected.u32, next.u32);
+       } while( current.u32 != expected.u32 );
+   }
+\end{lstlisting}
+\caption{Kernel code for a solution to atomic addition with floats.}
+\label{fig:atomic_float_addition}
+\end{figure}
+\subsection{Particle Iteration}
 \chapter{Results}
 \section{Comparison between CPU and GPU}
 \chapter{Conclusion}

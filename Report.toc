@@ -32,9 +32,13 @@
 \contentsline {subsection}{\numberline {5.1.1}Particle}{12}
 \contentsline {subsection}{\numberline {5.1.2}Collision}{12}
 \contentsline {subsection}{\numberline {5.1.3}Buffers}{12}
-\contentsline {chapter}{\numberline {6}Results}{14}
-\contentsline {section}{\numberline {6.1}Comparison between CPU and GPU}{14}
-\contentsline {chapter}{\numberline {7}Conclusion}{15}
-\contentsline {section}{\numberline {7.1}Further Work}{15}
-\contentsline {chapter}{\numberline {A}Derivations}{16}
-\contentsline {section}{\numberline {A.1}Equation 4.9\hbox {}}{16}
+\contentsline {section}{\numberline {5.2}Kernels}{13}
+\contentsline {subsection}{\numberline {5.2.1}Collision Detection}{13}
+\contentsline {subsection}{\numberline {5.2.2}Collision Resolution}{13}
+\contentsline {subsection}{\numberline {5.2.3}Particle Iteration}{13}
+\contentsline {chapter}{\numberline {6}Results}{15}
+\contentsline {section}{\numberline {6.1}Comparison between CPU and GPU}{15}
+\contentsline {chapter}{\numberline {7}Conclusion}{16}
+\contentsline {section}{\numberline {7.1}Further Work}{16}
+\contentsline {chapter}{\numberline {A}Derivations}{17}
+\contentsline {section}{\numberline {A.1}Equation 4.9\hbox {}}{17}
