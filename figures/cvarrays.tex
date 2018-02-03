@@ -1,0 +1,157 @@
+\usetikzlibrary{patterns}
+\begin{tikzpicture}
+
+
+\draw [pattern=horizontal lines][help lines, step=1cm] (-5,-1) node (v19) {} grid (4,0) node (v60) {};
+
+\node (v20) at (-4.5,-0.5) {4};
+\node (v21) at (-3.5,-0.5) {2};
+\node at (-2.5,-0.5) {0};
+\node at (-1.5,-0.5) {0};
+\node at (-0.5,-0.5) {3};
+\node at (0.5,-0.5) {5};
+\node at (1.5,-0.5) {3};
+\node at (2.5,-0.5) {2};
+\node at (3.5,-0.5) {1};
+
+\draw [pattern=horizontal lines][help lines, step=1cm] (-5,-3) node (v1) {} grid (4,-2) node (v40) {};
+
+\node at (-4.5,-2.5) {0};
+\node at (-3.5,-2.5) {4};
+\node at (-2.5,-2.5) {-1};
+\node at (-1.5,-2.5) {-1};
+\node at (-0.5,-2.5) {6};
+\node at (0.5,-2.5) {9};
+\node at (1.5,-2.5) {14};
+\node at (2.5,-2.5) {17};
+\node at (3.5,-2.5) {19};
+
+\draw [pattern=horizontal lines][help lines, step=0.5cm] (-5.5,-4.5) grid (4.5,-4) node (v18) {};
+
+
+\node (v2) at (-5.5,-4) {};
+\node at (-5,-4) {};
+\node at (-4.5,-4) {};
+\node at (-4,-4) {};
+\node (v4) at (-3.5,-4) {};
+\node at (-3,-4) {};
+\node (v6) at (-2.5,-4) {};
+\node at (-2,-4) {};
+\node at (-1.5,-4) {};
+\node (v10) at (-1,-4) {};
+\node at (-0.5,-4) {};
+\node at (0,-4) {};
+\node at (0.5,-4) {};
+\node at (1,-4) {};
+\node (v12) at (1.5,-4) {};
+\node at (2,-4) {};
+\node at (2.5,-4) {};
+\node (v14) at (3,-4) {};
+\node at (3.5,-4) {};
+\node (v16) at (4,-4) {};
+
+\node (v3) at (-4,-3) {};
+\node (v5) at (-3,-3) {};
+\node (v7) at (-2,-3) {};
+\node (v8) at (-1,-3) {};
+\node (v9) at (0,-3) {};
+\node (v11) at (1,-3) {};
+\node (v13) at (2,-3) {};
+\node (v15) at (3,-3) {};
+\node (v17) at (4,-3) {};
+
+\draw  (v2) rectangle (-3.5,-4.5);
+\draw  (v4) rectangle (-2.5,-4.5);
+\draw  (v6) rectangle (-1,-4.5);
+\draw  (v10) rectangle (1.5,-4.5);
+\draw  (v12) rectangle (3,-4.5);
+\draw  (v14) rectangle (4,-4.5);
+\draw  (v16) rectangle (4.5,-4.5);
+\node (v22) at (-5,-2) {};
+\node (v24) at (-4,-2) {};
+\node (v26) at (-3,-2) {};
+\node (v28) at (-2,-2) {};
+\node (v30) at (-1,-2) {};
+\node (v32) at (0,-2) {};
+\node (v34) at (1,-2) {};
+\node (v36) at (2,-2) {};
+\node (v38) at (3,-2) {};
+\node (v23) at (-4,-1) {};
+\node (v25) at (-3,-1) {};
+\node (v27) at (-2,-1) {};
+\node (v29) at (-1,-1) {};
+\node (v31) at (0,-1) {};
+\node (v33) at (1,-1) {};
+\node (v35) at (2,-1) {};
+
+\node (v39) at (4,-1) {};
+\node (v37) at (3,-1) {};
+
+\node at (-7.5,-0.5) {Particle Count Array};
+\node at (-7.5,-2.5) {CV Start Index Array};
+\node at (-7.5,-4.25) {Sorted Particle Array};
+
+
+
+\draw [dashed] (v19) edge (v22);
+\draw [dashed] (v23) edge (v24);
+\draw [dashed] (v25) edge (v26);
+\draw [dashed] (v27) edge (v28);
+\draw [dashed] (v29) edge (v30);
+\draw [dashed] (v31) edge (v32);
+\draw [dashed] (v33) edge (v34);
+\draw [dashed] (v35) edge (v36);
+\draw [dashed] (v37) edge (v38);
+\draw [dashed] (v39) edge (v40);
+\draw [dashed] (v1) edge (v2);
+\draw [dashed] (v3) edge (v4);
+\draw [dashed] (v5) edge (v6);
+\draw [dashed] (v7) edge (v6);
+\draw [dashed] (v8) edge (v6);
+\draw [dashed] (v9) edge (v10);
+\draw [dashed] (v11) edge (v12);
+\draw [dashed] (v14) edge (v13);
+\draw [dashed] (v15) edge (v16);
+\draw [dashed] (v17) edge (v18);
+
+\draw [help lines, step=1cm] (-5,1) node (v41) {} grid (4,2);
+\node at (-4.5,1.5) {0};
+\node at (-3.5,1.5) {1};
+\node at (-2.5,1.5) {2};
+\node at (-1.5,1.5) {3};
+\node at (-0.5,1.5) {4};
+\node at (0.5,1.5) {5};
+\node at (1.5,1.5) {6};
+\node at (2.5,1.5) {7};
+\node at (3.5,1.5) {8};
+\node (v42) at (-5,0) {};
+\node (v44) at (-4,0) {};
+\node (v46) at (-3,0) {};
+\node (v48) at (-2,0) {};
+\node (v50) at (-1,0) {};
+\node (v52) at (0,0) {};
+\node (v56) at (1,0) {};
+
+\node (v58) at (3,0) {};
+\node (v54) at (2,0) {};
+\node (v43) at (-4,1) {};
+\node (v45) at (-3,1) {};
+\node (v47) at (-2,1) {};
+\node (v49) at (-1,1) {};
+\node (v51) at (0,1) {};
+\node (v55) at (1,1) {};
+\node (v53) at (2,1) {};
+\node (v57) at (3,1) {};
+\node (v59) at (4,1) {};
+\draw [dashed] (v41) edge (v42);
+\draw [dashed] (v43) edge (v44);
+\draw [dashed] (v45) edge (v46);
+\draw [dashed] (v47) edge (v48);
+\draw [dashed] (v49) edge (v50);
+\draw [dashed] (v51) edge (v52);
+\draw [dashed] (v53) edge (v54);
+\draw [dashed] (v55) edge (v56);
+\draw [dashed] (v57) edge (v58);
+\draw [dashed] (v59) edge (v60);
+\node at (-7.5,1.5) {CV Index};
+\end{tikzpicture}
