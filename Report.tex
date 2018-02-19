@@ -13,10 +13,12 @@
 \author{Elijah Andrews}
 \title{Implementing the Discrete Element Method with OpenCL for GPUs}
 \begin{document}
+\chapter*{Abstract}
 \tableofcontents
 \chapter{Introduction}
 \section{Previous Work}
 \section{Project Goals}
+\section{Single Particle Motion in Fluids}
 \chapter{The Discrete Element Method}
 \section{Forces}
 \section{Collision Detection}
@@ -24,31 +26,8 @@ It is most efficient to have the control volumes as small as possible because th
 this can decrease efficiency for statistical distributions of particle sizes.
 \section{Implicit/Explicit}
 \section{Rotation/Quaternions}
-\chapter{OpenCL and Graphics Processing Units}
-\chapter{Python Implementation}
-\section{Overview}
-An initial implementation of the Discrete Element Method has been done in Python. The objective of this implementation is to gain an understanding of the DEM and any inherent computational difficulties. Python has been chosen as a testing environment for its simplicity and ease of development. 
-\section{Element Types}
-Different element types are required for different types of geometry and particle. For the Python implementation the two simplest have been chosen, a spherical particle and an axis-aligned wall.
-\subsection{Particle}
-The basic particle element is a spherical particle with pre-determined properties. These properties include initial position, initial velocity, diameter, density, fluid viscosity, and functions for fluid velocity and gravity. All of these properties can be set upon instantiation of each particle object and so can be easily modified for a variety of different simulations.
-\\There are two objects for particles, the main object, 'Particle', tracks a full particle state history which is very memory intensive and unnecessary for most applications. The second object, 'LowMemParticle', inherits from 'Particle' and only keeps track of the current state and, during iteration, one future state.
-\\The particle is iterated using the function call 'Particle.iterate()'. This passes a $\Delta t$ to the particle object and iterates the velocity and position. The methods used for integrating these properties are discussed in section \ref{sec:Numerical Integration}.
-\subsection{Axis-Aligned Simple Wall}
-The basic wall element is an axis-aligned simple wall. This object is defined by two points, minimum and maximum, that must lie in the same plane. From them a rectangle is formed. A normal is calculated for the wall and stored in the object to save time in collision calculations. The wall is treated as fixed, eliminating the need for complex material properties or calculation of motion.
-\section{Collisions}
-\subsection{Collision Detection}
-Broad phase collision detection uses the simple spatial zoning technique described in Tuley\cite{tuley}. This approach has been chosen because it is quick and simple to implement. Other options were considered for this implementation but the benefits of using them were far outweighed by the complexity that using them would add to the overall algorithm. Since the initial Python implementation will not be fast anyway it was not deemed necessary to implement optimised algorithms at this stage.
-\\The domain is represented by a three dimensional array where each entry is a control volume. The control volume is a list of particles in its bounds. The list of particles is iterated over and each particle assigns itself to the correct control volume. This results in a three dimensional array where each control volume has all of the particles within its bounds as an array. Collision objects are then created for each pair of particles in the same, or neighbouring, control volumes. This approach reduces the problem from $O(N^{2})$ to almost $O(N)$ as shown in figure \ref{fig:run_time_against_N_python}.
-\begin{figure}[!ht]
-\centering
-\includegraphics[scale=0.75]{figures/RunTimeAgainstNumberOfParticlesPython.png}
-\caption{This graph shows that the simple spatial zoning technique reduces the problem from $O(N^{2})$ down to almost $O(N)$.}
-\label{fig:run_time_against_N_python}
-\end{figure}
-\subsection{Collision Resolution}
-After an array of collisions has been generated they are iterated over and each collision is resolved. First, the distance between particles is calculated to determine if they are in contact. Often this reveals that they are not in contact and the calculation ends there. If particles are in contact then collision forces are determined.
-\\In this initial Python implementation only the simple normal and tangential contact forces are calculated. These are enough to run sufficient initial test cases.
+
+\chapter{Numerical Methods}
 \section{Calculating Forces}
 There are three categories of forces used in this implementation. These are drag (particle-fluid interaction), gravity, and DEM forces.
 \subsection{Drag}
@@ -130,6 +109,31 @@ Equation \ref{eq:implicit_drag_acceleration_with_other_accelerations} can be app
 \caption{A graph of particle speed against time for each method of integration using equation \ref{eq:implicit_drag_acceleration_with_other_accelerations}.}
 \label{fig:fig:terminal_velocity_implicit_explicit}
 \end{figure}
+\chapter{Python Implementation}
+\section{Overview}
+An initial implementation of the Discrete Element Method has been done in Python. The objective of this implementation is to gain an understanding of the DEM and any inherent computational difficulties. Python has been chosen as a testing environment for its simplicity and ease of development. 
+\section{Element Types}
+Different element types are required for different types of geometry and particle. For the Python implementation the two simplest have been chosen, a spherical particle and an axis-aligned wall.
+\subsection{Particle}
+The basic particle element is a spherical particle with pre-determined properties. These properties include initial position, initial velocity, diameter, density, fluid viscosity, and functions for fluid velocity and gravity. All of these properties can be set upon instantiation of each particle object and so can be easily modified for a variety of different simulations.
+\\There are two objects for particles, the main object, 'Particle', tracks a full particle state history which is very memory intensive and unnecessary for most applications. The second object, 'LowMemParticle', inherits from 'Particle' and only keeps track of the current state and, during iteration, one future state.
+\\The particle is iterated using the function call 'Particle.iterate()'. This passes a $\Delta t$ to the particle object and iterates the velocity and position. The methods used for integrating these properties are discussed in section \ref{sec:Numerical Integration}.
+\subsection{Axis-Aligned Simple Wall}
+The basic wall element is an axis-aligned simple wall. This object is defined by two points, minimum and maximum, that must lie in the same plane. From them a rectangle is formed. A normal is calculated for the wall and stored in the object to save time in collision calculations. The wall is treated as fixed, eliminating the need for complex material properties or calculation of motion.
+\section{Collisions}
+\subsection{Collision Detection}
+Broad phase collision detection uses the simple spatial zoning technique described in Tuley\cite{tuley}. This approach has been chosen because it is quick and simple to implement. Other options were considered for this implementation but the benefits of using them were far outweighed by the complexity that using them would add to the overall algorithm. Since the initial Python implementation will not be fast anyway it was not deemed necessary to implement optimised algorithms at this stage.
+\\The domain is represented by a three dimensional array where each entry is a control volume. The control volume is a list of particles in its bounds. The list of particles is iterated over and each particle assigns itself to the correct control volume. This results in a three dimensional array where each control volume has all of the particles within its bounds as an array. Collision objects are then created for each pair of particles in the same, or neighbouring, control volumes. This approach reduces the problem from $O(N^{2})$ to almost $O(N)$ as shown in figure \ref{fig:run_time_against_N_python}.
+\begin{figure}[!ht]
+\centering
+\includegraphics[scale=0.75]{figures/RunTimeAgainstNumberOfParticlesPython.png}
+\caption{This graph shows that the simple spatial zoning technique reduces the problem from $O(N^{2})$ down to almost $O(N)$.}
+\label{fig:run_time_against_N_python}
+\end{figure}
+\subsection{Collision Resolution}
+After an array of collisions has been generated they are iterated over and each collision is resolved. First, the distance between particles is calculated to determine if they are in contact. Often this reveals that they are not in contact and the calculation ends there. If particles are in contact then collision forces are determined.
+\\In this initial Python implementation only the simple normal and tangential contact forces are calculated. These are enough to run sufficient initial test cases.
+
 \section{Verification}
 To asses the accuracy of the implementation a series of cases have been tested and compared to analytical solutions of the model.
 \subsection{Settling Overlap}
@@ -166,6 +170,7 @@ Running a simulation with these parameters also yields an overlap of $1.027 * 10
 \subsubsection{Timestep stability}
 This result can also be compared for varying timesteps to asses the stability of the implementation. Figure \ref{fig:overlap_percentage_error_against_timestep} shows very stable results up until a timestep of approximately 0.00097.
 \begin{figure}[!htb]
+\chapter{OpenCL and Graphics Processing Units}
 \centering
 \includegraphics[scale=0.75]{figures/ParticleBounceTimestepAgainstPercentageError.png}
 \caption{A graph of overlap percentage error against time step.}
