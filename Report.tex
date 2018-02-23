@@ -17,17 +17,28 @@
 \tableofcontents
 \chapter{Introduction}
 \section{Previous Work}
-\section{Project Goals}
 \section{Single Particle Motion in Fluids}
+\section{Project Goals}
 \chapter{The Discrete Element Method}
+The Discrete Element Method (DEM) is a numerical method for simulating how particles move and interact. The general principle is that individual particles of a medium are treated as separate rather than making continuum assumptions. This makes it a good method for modelling behaviours in granular materials such as sand or rocks. The DEM can be implemented with either soft or hard collision models. Soft models allow for overlap and treat collisions as sustained events whereas hard models treat collisions as an instantaneous event and model forces as an impulse. Soft collision models have broader applicability as they model sustained contact and multiple simultaneous collisions as well as some other phenomena\cite{softvshard}. For this reason a soft contact model has been chosen for this work.
 \section{Forces}
+The Discrete Element Method can simulate a number of different forces using a variety of models. The merits of some of the most common models are discussed in Tuley\cite{tuley}. For this work the simplest force models have been chosen to reduce the overall complexity of the simulation.
+\subsection{Normal Contact Force}
+In a real elastic collision there will be some deformation of the particles. Calculating the deformation itself would be computationally expensive and would not be of interest in the study of particle population behaviours. The interaction can be modelled as a linear spring-dashpot arrangement where the overlap between the two particles is the compression of the spring. There is also damping based on the relative velocity in the normal direction. The force is thus described by equation \ref{eq:normal contact force}. %TODO Make this clearer.
+\begin{equation}
+F_{n} = k_{e} \delta \hat{n} - \eta u_{n}
+\label{eq:normal contact force}
+\end{equation}
+\subsection{Tangential Contact Force}
+\subsection{Cohesion Force}
+\section{Rotation/Quaternions}
 \section{Collision Detection}
 It is most efficient to have the control volumes as small as possible because this reduces the number of particles in neighbouring control volumes. Control volumes must be at least as large as the largest particle to ensure that neighbouring control volumes contain all possible collisions. For monodisperse particle populations this means that the control volumes should be the same size as the particles. For polydisperse particle populations this means that the control volumes should be the size of the largest particle in the population. As mentioned in %TODO Reference
 this can decrease efficiency for statistical distributions of particle sizes.
-\section{Implicit/Explicit}
-\section{Rotation/Quaternions}
+
 
 \chapter{Numerical Methods}
+\section{Implicit/Explicit}
 \section{Calculating Forces}
 There are three categories of forces used in this implementation. These are drag (particle-fluid interaction), gravity, and DEM forces.
 \subsection{Drag}
