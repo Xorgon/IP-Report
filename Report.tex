@@ -26,11 +26,42 @@ The Discrete Element Method can simulate a number of different forces using a va
 \subsection{Normal Contact Force}
 In a real elastic collision there will be some deformation of the particles. Calculating the deformation itself would be computationally expensive and would not be of interest in the study of particle population behaviours. The interaction can be modelled as a linear spring-dashpot arrangement where the overlap between the two particles is the compression of the spring. There is also damping based on the relative velocity in the normal direction. The force is thus described by equation \ref{eq:normal contact force}. %TODO Make this clearer.
 \begin{equation}
-F_{n} = k_{e} \delta \hat{n} - \eta u_{n}
+\mathbf{F}_{n} = k_{e} \delta \mathbf{\hat{n}} - \eta \mathbf{u}_{n}
 \label{eq:normal contact force}
 \end{equation}
 \subsection{Tangential Contact Force}
+The tangential contact force is the friction between two particle surfaces. There are two regimes of friction force, static and dynamic. In the static regime there is no tangential motion and the friction acts to stop motion. In the dynamic regime two surfaces are sliding across one another and the friction acts to arrest this motion. The static regime usually has a higher friction coefficient than the dynamic regime. The simplest and least computationally expensive model for friction is a 'complex friction model'. This calculates values for both of the regimes and applies the minimum of the two calculations.\cite{tuley}.
+\\\\The static regime friction force is calculated with equation \ref{eq:static friction}.
+\begin{equation}
+\mathbf{F}_{t}^{static} = - k_{f} \zeta \mathbf{\hat{t}}
+\label{eq:static friction}
+\end{equation}
+\\The dynamic regime friction force is calculated with equation \ref{eq:dynamic friction}.
+\begin{equation}
+\mathbf{F}_{t}^{dynamic} = - \mu |\mathbf{F}_{n}| \mathbf{\hat{t}}
+\label{eq:dynamic friction}
+\end{equation}
+\\The final tangential friction force is defined in equation \ref{eq:friction force}.
+\begin{equation}
+\mathbf{F}_{t} = -\mathbf{\hat{t}}min(|\mathbf{F}_{t}^{static}|, |\mathbf{F}_{t}^{dynamic}|)
+\label{eq:friction force}
+\end{equation}
 \subsection{Cohesion Force}
+Basic linear approximation equation \ref{eq:cohesion force}.
+
+\begin{equation}
+\mathbf{F}_{c} = k_{c} \delta_{e} \mathbf{\hat{n}}
+\label{eq:cohesion force}
+\end{equation}
+\section{Equations of Motion}
+\begin{equation}
+\mathbf{F} = \mathbf{F}_{n} + \mathbf{F}_{t} + \mathbf{F}_{c} + \mathbf{F}_{g} + \mathbf{F}_{d}
+\label{eq:total force}
+\end{equation}
+\begin{equation}
+\dfrac{du}{dt} = \dfrac{\mathbf{F}}{m}
+\label{eq:acceleration}
+\end{equation}
 \section{Rotation/Quaternions}
 \section{Collision Detection}
 It is most efficient to have the control volumes as small as possible because this reduces the number of particles in neighbouring control volumes. Control volumes must be at least as large as the largest particle to ensure that neighbouring control volumes contain all possible collisions. For monodisperse particle populations this means that the control volumes should be the same size as the particles. For polydisperse particle populations this means that the control volumes should be the size of the largest particle in the population. As mentioned in %TODO Reference
