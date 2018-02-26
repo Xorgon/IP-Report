@@ -13,30 +13,33 @@
 \author{Elijah Andrews}
 \title{Implementing the Discrete Element Method with OpenCL for GPUs}
 \begin{document}
+\chapter*{Nomenclature}
 \chapter*{Abstract}
 \tableofcontents
 \chapter{Introduction}
 \section{Previous Work}
 \section{Single Particle Motion in Fluids}
+\label{sec:Single Particle Motion in Fluids}
 \section{Project Goals}
 \chapter{The Discrete Element Method}
-The Discrete Element Method (DEM) is a numerical method for simulating how particles move and interact. The general principle is that individual particles of a medium are treated as separate rather than making continuum assumptions. This makes it a good method for modelling behaviours in granular materials such as sand or rocks. The DEM can be implemented with either soft or hard collision models. Soft models allow for overlap and treat collisions as sustained events whereas hard models treat collisions as an instantaneous event and model forces as an impulse. Soft collision models have broader applicability as they model sustained contact and multiple simultaneous collisions as well as some other phenomena\cite{softvshard}. For this reason a soft contact model has been chosen for this work.
-\section{Forces}
+The Discrete Element Method (DEM) is a numerical method for simulating how particles move and interact. The general principle is that individual particles of a medium are treated as separate rather than making continuum assumptions. This makes it a good method for modelling behaviours in granular materials such as sand or rocks. The DEM can be implemented with either soft or hard collision models. Soft models allow for overlap and treat collisions as sustained events whereas hard models treat collisions as an instantaneous event and model forces as an impulse. Soft collision models have broader applicability as they model sustained contact and multiple simultaneous collisions as well as some other complex phenomena\cite{softvshard}. For this reason a soft contact model has been chosen for this work.
+\section{DEM Forces}
+\label{sec:DEM Forces}
 The Discrete Element Method can simulate a number of different forces using a variety of models. The merits of some of the most common models are discussed in Tuley\cite{tuley}. For this work the simplest force models have been chosen to reduce the overall complexity of the simulation.
 \subsection{Normal Contact Force}
-In a real elastic collision there will be some deformation of the particles. Calculating the deformation itself would be computationally expensive and would not be of interest in the study of particle population behaviours. The interaction can be modelled as a linear spring-dashpot arrangement where the overlap between the two particles is the compression of the spring. There is also damping based on the relative velocity in the normal direction. The force is thus described by equation \ref{eq:normal contact force}. %TODO Make this clearer.
+In a real elastic collision there will be some deformation of the particles. Calculating the deformation itself would be computationally expensive and would not be of interest in the study of particle population behaviours. The interaction can be modelled as a linear spring-dashpot arrangement where the overlap between the two particles is the compression of the spring. There is also damping based on the relative velocity in the normal direction. The force is thus described by equation \ref{eq:normal contact force} where $k_{e}$ is the collision stiffness, $\delta$ is the particle overlap, $\mathbf{\hat{n}}$ is the unit vector normal to the collision, $\eta$ is the damping coefficient, and $\mathbf{u}_{n}$ is the normal velocity.%TODO Make this clearer.
 \begin{equation}
 \mathbf{F}_{n} = k_{e} \delta \mathbf{\hat{n}} - \eta \mathbf{u}_{n}
 \label{eq:normal contact force}
 \end{equation}
 \subsection{Tangential Contact Force}
-The tangential contact force is the friction between two particle surfaces. There are two regimes of friction force, static and dynamic. In the static regime there is no tangential motion and the friction acts to stop motion. In the dynamic regime two surfaces are sliding across one another and the friction acts to arrest this motion. The static regime usually has a higher friction coefficient than the dynamic regime. The simplest and least computationally expensive model for friction is a 'complex friction model'. This calculates values for both of the regimes and applies the minimum of the two calculations.\cite{tuley}.
-\\\\The static regime friction force is calculated with equation \ref{eq:static friction}.
+The tangential contact force is the friction between two particle surfaces. There are two regimes of friction force, static and dynamic. In the static regime there is no tangential motion and the friction acts to stop motion. In the dynamic regime two surfaces are sliding across one another and the friction acts to arrest this motion. The static regime usually has a higher friction coefficient than the dynamic regime. The simplest and least computationally expensive model for friction is a 'complex friction model'. This calculates values for both of the regimes and applies the minimum of the two calculations.\cite{tuley}
+\\\\The static regime friction force is calculated with equation \ref{eq:static friction} where $k_f$ is the friction stiffness, $\zeta$ is the tangential displacement, and $\mathbf{\hat{t}}$ is the unit vector tangential to the collision. 
 \begin{equation}
 \mathbf{F}_{t}^{static} = - k_{f} \zeta \mathbf{\hat{t}}
 \label{eq:static friction}
 \end{equation}
-\\The dynamic regime friction force is calculated with equation \ref{eq:dynamic friction}.
+\\The dynamic regime friction force is calculated with equation \ref{eq:dynamic friction} where $\mu$ is the coefficient of friction.
 \begin{equation}
 \mathbf{F}_{t}^{dynamic} = - \mu |\mathbf{F}_{n}| \mathbf{\hat{t}}
 \label{eq:dynamic friction}
@@ -47,38 +50,31 @@ The tangential contact force is the friction between two particle surfaces. Ther
 \label{eq:friction force}
 \end{equation}
 \subsection{Cohesion Force}
-Basic linear approximation equation \ref{eq:cohesion force}.
-
+Cohesion is the attractive force between two bodies of the same material, adhesion is the attractive force between two bodies of different materials. For this work all of the particles and walls are assumed to be of the same material and so only cohesion is considered, however adhesion could be modelled with different constants. Although there are many complex effects that could be considered\cite{tuley}, a basic linear approximation can be used to model a cohesion force. This is defined in equation \ref{eq:cohesion force} where $k_c$ is the cohesion stiffness and $\delta_e$ is the particle effect surface overlap.
 \begin{equation}
 \mathbf{F}_{c} = k_{c} \delta_{e} \mathbf{\hat{n}}
 \label{eq:cohesion force}
 \end{equation}
 \section{Equations of Motion}
-\begin{equation}
-\mathbf{F} = \mathbf{F}_{n} + \mathbf{F}_{t} + \mathbf{F}_{c} + \mathbf{F}_{g} + \mathbf{F}_{d}
-\label{eq:total force}
-\end{equation}
+The motion of particles in the simulation is governed by equation \ref{eq:acceleration}. This is derived from Newton's Second Law of motion. The total force, $\mathbf{F}$ is a combination of forces as shown in equation \ref{eq:total force}. $\mathbf{F}_{n}$, $\mathbf{F}_{t}$, and $\mathbf{F}_{c}$ are the forces defined in section \ref{sec:DEM Forces}. $\mathbf{F}_{g}$ and $\mathbf{F}_{d}$ are the gravitational force and drag force, respectively.
+\\\textit{$<$These will be defined in section \ref{sec:Single Particle Motion in Fluids}$>$}.
 \begin{equation}
 \dfrac{du}{dt} = \dfrac{\mathbf{F}}{m}
 \label{eq:acceleration}
 \end{equation}
+\begin{equation}
+\mathbf{F} = \mathbf{F}_{n} + \mathbf{F}_{t} + \mathbf{F}_{c} + \mathbf{F}_{g} + \mathbf{F}_{d}
+\label{eq:total force}
+\end{equation}
+Equation \ref{eq:acceleration} can be integrated twice to obtain the position of a particle at a time $t$.
 \section{Rotation/Quaternions}
+\textit{$<$This will be completed later as it is not immediately relevant to the progress of the project.$>$}
 \section{Collision Detection}
 It is most efficient to have the control volumes as small as possible because this reduces the number of particles in neighbouring control volumes. Control volumes must be at least as large as the largest particle to ensure that neighbouring control volumes contain all possible collisions. For monodisperse particle populations this means that the control volumes should be the same size as the particles. For polydisperse particle populations this means that the control volumes should be the size of the largest particle in the population. As mentioned in %TODO Reference
 this can decrease efficiency for statistical distributions of particle sizes.
-
-
 \chapter{Numerical Methods}
 \section{Implicit/Explicit}
-\section{Calculating Forces}
-There are three categories of forces used in this implementation. These are drag (particle-fluid interaction), gravity, and DEM forces.
-\subsection{Drag}
-The drag forces are determined using Stokes' law as discussed in %TODO Reference
-This is calculated using a flow field calculation function that is passed into the Particle object upon instantiation. The particle then calls this function as part of its get\_accel() function. This allows a variety of flow field functions to be used without modifying the Particle object code. The default for this function is a perfectly stationary flow.
-\subsection{Gravity}
-Gravity is treated in a similar manner to drag. A gravity function can be passed into the Particle object upon instantiation. Although this defaults to a simple -9.81$ms^{-1}$, it can be chosen to simulate a rotating frame of reference or other complex configurations. A rotating frame of reference has been implemented in the ``gravity\_shift\_closed\_box'' example simulation. %TODO Reference github
-\subsection{DEM Forces}
-The DEM forces that are calculated in collisions are stored in an array within the Particle object. When the particle is iterated the array is added together and used in the integration calculation. After this calculation the array is cleared so that forces don't get incorrectly added multiple times. This configuration makes it simple to add and remove forces to the simulation whenever necessary and could also be used in general to add any force to the particle.
+
 \section{Numerical Integration} \label{sec:Numerical Integration}
 \subsection{Velocity}
 Velocity is iterated with equation \ref{eq:particle_velocity_iteration} where $\dot{u}$ is the acceleration obtained from the function call 'Particle.get{\_}accel()'.
@@ -175,7 +171,15 @@ Broad phase collision detection uses the simple spatial zoning technique describ
 \subsection{Collision Resolution}
 After an array of collisions has been generated they are iterated over and each collision is resolved. First, the distance between particles is calculated to determine if they are in contact. Often this reveals that they are not in contact and the calculation ends there. If particles are in contact then collision forces are determined.
 \\In this initial Python implementation only the simple normal and tangential contact forces are calculated. These are enough to run sufficient initial test cases.
-
+\section{Calculating Forces}
+There are three categories of forces used in this implementation. These are drag (particle-fluid interaction), gravity, and DEM forces.
+\subsection{Drag}
+The drag forces are determined using Stokes' law as discussed in %TODO Reference
+This is calculated using a flow field calculation function that is passed into the Particle object upon instantiation. The particle then calls this function as part of its get\_accel() function. This allows a variety of flow field functions to be used without modifying the Particle object code. The default for this function is a perfectly stationary flow.
+\subsection{Gravity}
+Gravity is treated in a similar manner to drag. A gravity function can be passed into the Particle object upon instantiation. Although this defaults to a simple -9.81$ms^{-1}$, it can be chosen to simulate a rotating frame of reference or other complex configurations. A rotating frame of reference has been implemented in the ``gravity\_shift\_closed\_box'' example simulation. %TODO Reference github
+\subsection{DEM Forces}
+The DEM forces that are calculated in collisions are stored in an array within the Particle object. When the particle is iterated the array is added together and used in the integration calculation. After this calculation the array is cleared so that forces don't get incorrectly added multiple times. This configuration makes it simple to add and remove forces to the simulation whenever necessary and could also be used in general to add any force to the particle.
 \section{Verification}
 To asses the accuracy of the implementation a series of cases have been tested and compared to analytical solutions of the model.
 \subsection{Settling Overlap}
