@@ -225,5 +225,8 @@ TSWLatexianTemp*
 # standalone packages
 *.sta
 
-#TikzEdt
+# TikzEdt
 *.preview.pdf
+
+# Nomencl
+*.nls

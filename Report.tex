@@ -10,12 +10,34 @@
 \usepackage{graphicx}
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
 \usepackage{tikz}
+\usepackage{nomencl}
+\makenomenclature
 \author{Elijah Andrews}
 \title{Implementing the Discrete Element Method with OpenCL for GPUs}
+\makeindex
 \begin{document}
-\chapter*{Nomenclature}
 \chapter*{Abstract}
 \tableofcontents
+\nomenclature{$\mathbf{u}$}{Particle Velocity Vector}
+\nomenclature{$\mathbf{u}_n$}{Relative Velocity Normal to Collision}
+\nomenclature{$\delta$}{Particle Body Surface Overlap Distance}
+\nomenclature{$\delta_{e}$}{Particle Effect Surface Overlap Distance}
+\nomenclature{$\mathbf{F}$}{Force}
+\nomenclature{$\mathbf{F}_n$}{Normal Contact Force}
+\nomenclature{$\mathbf{F}_t$}{Tangential Contact Force}
+\nomenclature{$\mathbf{F}_c$}{Cohesion Force}
+\nomenclature{$\mathbf{F}_g$}{Gravitational Force}
+\nomenclature{$\mathbf{F}_d$}{Drag Force}
+\nomenclature{$\eta$}{Damping Coefficient}
+\nomenclature{$\mathbf{\hat{n}}$}{Collision Normal Unit Vector}
+\nomenclature{$\mathbf{\hat{t}}$}{Collision Tangent Unit Vector}
+\nomenclature{$\mu$}{Friction Coefficient}
+\nomenclature{$\zeta$}{Tangential Displacement During Interaction}
+\nomenclature{$k_e$}{Normal Collision Stiffness}
+\nomenclature{$k_f$}{Friction Stiffness}
+\nomenclature{$k_c$}{Cohesion Stiffness}
+\nomenclature{$t$}{Time}
+\printnomenclature
 \chapter{Introduction}
 \section{Previous Work}
 \section{Single Particle Motion in Fluids}
@@ -34,7 +56,7 @@ In a real elastic collision there will be some deformation of the particles. Cal
 \end{equation}
 \subsection{Tangential Contact Force}
 The tangential contact force is the friction between two particle surfaces. There are two regimes of friction force, static and dynamic. In the static regime there is no tangential motion and the friction acts to stop motion. In the dynamic regime two surfaces are sliding across one another and the friction acts to arrest this motion. The static regime usually has a higher friction coefficient than the dynamic regime. The simplest and least computationally expensive model for friction is a 'complex friction model'. This calculates values for both of the regimes and applies the minimum of the two calculations.\cite{tuley}
-\\\\The static regime friction force is calculated with equation \ref{eq:static friction} where $k_f$ is the friction stiffness, $\zeta$ is the tangential displacement, and $\mathbf{\hat{t}}$ is the unit vector tangential to the collision. 
+\\\\The static regime friction force is calculated with equation \ref{eq:static friction} where $k_f$ is the friction stiffness, $\zeta$ is the tangential displacement during the interaction, and $\mathbf{\hat{t}}$ is the unit vector tangential to the collision. 
 \begin{equation}
 \mathbf{F}_{t}^{static} = - k_{f} \zeta \mathbf{\hat{t}}
 \label{eq:static friction}
