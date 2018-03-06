@@ -50,6 +50,8 @@
 \nomenclature{$d_p$}{Particle Diameter}
 \nomenclature{$\rho_p$}{Particle Density}
 \nomenclature{$\mu$}{Dynamic Viscosity}
+\nomenclature{$u$}{Particle Speed}
+\nomenclature{$u_{0}$}{Initial Particle Speed}
 \printnomenclature
 \chapter{Introduction}
 \section{Previous Work}
@@ -288,7 +290,6 @@ Running a simulation with these parameters also yields an overlap of $1.027 * 10
 \subsubsection{Timestep stability}
 This result can also be compared for varying timesteps to asses the stability of the implementation. Figure \ref{fig:overlap_percentage_error_against_timestep} shows very stable results up until a timestep of approximately 0.00097.
 \begin{figure}[!htb]
-\chapter{OpenCL and Graphics Processing Units}
 \centering
 \includegraphics[scale=0.75]{figures/ParticleBounceTimestepAgainstPercentageError.png}
 \caption{A graph of overlap percentage error against time step.}
@@ -299,6 +300,7 @@ Collisions go boom if timestep is too high etc. %<Test against bouncing or somet
 The stiffer the collisions the smaller the timestep must be to maintain physical results.
 This can be spotted and logged if $E_{k}$ is higher after collision than before.
 %TODO Run a simulation of timestep against stiffness.
+\chapter{OpenCL and Graphics Processing Units}
 \chapter{OpenCL Implementation}
 \section{Data Structures}
 As the C language does not support objects, the objects used in the Python implementation must be simplified into data structures and separate functions. Most of the calculations that were done in the object functions will now be done within the kernels.
@@ -395,6 +397,21 @@ Due to the large size of the project and algorithmic complexity, it is important
 Often a framework is used for unit testing, however there isn't a quick, easy framework available for C with OpenCL so a simple system has been set up to make running tests easy.
 \\Each tested feature has a directory within the 'tests' directory with its header and C code files. A feature may have multiple functions, each with its own testing function. Each testing function takes a boolean paramter, 'verbose', that determines whether it prints intermediate results and debugging outputs. The functions return a boolean that indicates whether the test passed or not. In some cases, if a function fails, it may not be obvious why and so debugging outputs will be printed. For example, test\_assign\_particle\_count could have the wrong number of control volumes or incorrectly assigned particles so both of these outcomes has its own printed debugging output. %TODO Reference code
 \\To make it easy to run these tests repeatedly 'run\_tests.c' has been created to run all of the tests and indicate which, if any, fails. A similar implementation can be executed at runtime from a simulation to ensure that all tests are passed before starting a simulation run.
+\section{Verification}
+\subsection{Normal Force}
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.75]{figures/normal_force_verification.png}
+\caption{Normalized position and speed against time during a normal collision.}
+\label{fig:normal_force_verification}
+\end{figure}
+\subsection{Friction Force}
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.75]{figures/friction_verification.png}
+\caption{Normalized position and speed against time during a friction event.}
+\label{fig:friction_verification}
+\end{figure}
 \chapter{Results}
 \section{Comparison between CPU and GPU}
 \chapter{Application}
