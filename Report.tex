@@ -401,16 +401,31 @@ Often a framework is used for unit testing, however there isn't a quick, easy fr
 \subsection{Normal Force}
 \begin{figure}[!htb]
 \centering
-\includegraphics[scale=0.75]{figures/normal_force_verification.png}
+\includegraphics[scale=0.5]{figures/normal_force_verification.png}
 \caption{Normalized position and speed against time during a normal collision.}
 \label{fig:normal_force_verification}
 \end{figure}
 \subsection{Friction Force}
+The analytic solution used in \ref{fig:friction_verification} is a dynamic Coulomb model friction only. Note that the error increases as the timestep decreases. This is caused by the static friction being lower than the dynamic friction and so not slowing the particle down as much.
+If the static friction part of the model is removed then the results are those shown in \ref{fig:friction_verification_dynamic_only}. This very closely matches the analytic solution but is less stable.
 \begin{figure}[!htb]
 \centering
-\includegraphics[scale=0.75]{figures/friction_verification.png}
+\includegraphics[scale=0.5]{figures/friction_verification.png}
 \caption{Normalized position and speed against time during a friction event.}
 \label{fig:friction_verification}
+\end{figure}
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.5]{figures/friction_verification_dynamic_only.png}
+\caption{Normalized position and speed against time during a friction event with only dynamic friction enabled.}
+\label{fig:friction_verification_dynamic_only}
+\end{figure}
+\subsection{Drag}
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.5]{figures/drag_verification.png}
+\caption{Normalized position and speed against time of a particle in a moving fluid.}
+\label{fig:drag_verification}
 \end{figure}
 \chapter{Results}
 \section{Comparison between CPU and GPU}
