@@ -57,6 +57,13 @@
 \chapter{Introduction}
 \section{Project Overview}
 \textit{What the project is about, why it is significant etc.}
+\section{Project Goals}
+Thus the aim of this project is to implement the DEM for large numbers of particles on OpenCL. This will allow for an assessment of OpenCL performance with large numbers of particle that has not yet been tested.
+\\\textit{$<$ Currently just a copy-paste from interim report, this will be expanded on and more clearly defined later on. $>$}
+\section{Report Structure}
+This report has three main parts. Firstly, the model being used and its numerical implementation are discussed. Chapter \ref{ch:The Discrete Element Method} provides detail on the mathematical model and the analytic equations of motion for the model. Chapter \ref{ch:Numerical Methods} shows how the mathematical model is implemented numerically and has some comparisons of method accuracy.
+\\The second part explains how the model is implemented programmatically. Chapter \ref{ch:Python Implementation} discusses the initial implementation of the algorithm in Python. Chapter \ref{ch:OpenCL Implementation} contains a background in Graphics Processing Units and how OpenCL functions. It also discusses the details of the final OpenCL implementation. Both of these chapters contain relevant simulation verification test cases.
+\\The final part is the application of the simulation to the study of how agglomerates form with varying particle properties and initial conditions. This demonstrates the capabilities of the simulation and provides some useful insights.
 \section{Previous Work}
 The project directly preceding this one was 'Programming GPU Cards with OpenCL to Predict the Motion of Billions of Particles'\cite{achow} by Andrew Chow. His project developed a parallelised particle-fluid simulator using OpenCL. Particle-particle interactions were not considered in his project. This project will expand upon his by implementing particle-particle interactions using the Discrete Element Method.
 \\The DEM has been implemented many times since it was originally devised by Cundall in 1971\cite{cundallphd}. Improvements in the algorithm have been proposed and implemented, and it has proven to be a reliable technique.
@@ -65,6 +72,7 @@ The project directly preceding this one was 'Programming GPU Cards with OpenCL t
 \\\textit{$<$ A lot of this was from interim report. I'm concerned that it may be too much detail on previous DEM implementations before DEM is explained properly. $>$}
 \section{Single Particle Motion in Fluids}
 \label{sec:Single Particle Motion in Fluids}
+\textit{This is just a summary of what Andrew Chow did, should I just include a sentence about what he did in the Previous Work section? I think this is useful because a lot of the non-DEM stuff was based heavily on what he did so a decent understanding of what he did lends to the background of what I'm doing.\\}
 The focus of the previous project was simulating how a particle moves in a fluid. The governing equations from that project form the basis of this project. The governing equation of motion was equation \ref{eq:single particle motion} where $\mathbf{u}$ is the particle velocity, $\mathbf{u}_f$ is the fluid velocity at the particle location, $\tau_p$ is the particle relaxation time, and $\mathbf{g}$ is the gravitational acceleration.
 \begin{equation}
 \label{eq:single particle motion}
@@ -75,13 +83,6 @@ The particle relaxation time, $\tau_p$ is an approximate timescale describing ho
 \label{eq:particle relaxation time}
 \tau_{p} = \dfrac{\rho_{p} d^{2}_{p}}{18 \mu}
 \end{equation}
-\section{Project Goals}
-Thus the aim of this project is to implement the DEM for large numbers of particles on OpenCL. This will allow for an assessment of OpenCL performance with large numbers of particle that has not yet been tested.
-\\\textit{$<$ Currently just a copy-paste from interim report, this will be expanded on and more clearly defined later on. $>$}
-\section{Report Structure}
-This report has three main parts. Firstly, the model being used and its numerical implementation are discussed. Chapter \ref{ch:The Discrete Element Method} provides detail on the mathematical model and the analytic equations of motion for the model. Chapter \ref{ch:Numerical Methods} shows how the mathematical model is implemented numerically and has some comparisons of method accuracy.
-\\The second part explains how the model is implemented programmatically. Chapter \ref{ch:Python Implementation} discusses the initial implementation of the algorithm in Python. Chapter \ref{ch:OpenCL Implementation} contains a background in Graphics Processing Units and how OpenCL functions. It also discusses the details of the final OpenCL implementation. Both of these chapters contain relevant simulation verification test cases.
-\\The final part is the application of the simulation to the study of how agglomerates form with varying particle properties and initial conditions. This demonstrates the capabilities of the simulation and provides some useful insights.
 \chapter{The Discrete Element Method}
 \label{ch:The Discrete Element Method}
 \textit{$<$ I'm considering adding an overall algorithm flowchart somewhere in this chapter. $>$}
@@ -152,6 +153,22 @@ The gravity force is also the same as that used in the previous project and is d
 \label{eq:gravitational force}
 \mathbf{F}_{g} = m \mathbf{g}
 \end{equation}
+\section{Useful Results}
+\subsection{Reduced Mass}
+When considering the motion of two particles relative to each other a useful property is the reduced mass. Consider the relative acceleration of two particles in a collision. To determine the relative acceleration between the two particles, the two accelerations must be combined. It is known that $F_1$ and $F_2$ are equal and opposite. Finding the relative acceleration results in equation \ref{eq:relative acceleration}. This provides a relationship between the force in a collision and the relative acceleration as a result of that collision. It is of a similar form as Newton's Second Law but with the usual mass replaced with the reduced mass of the two particles (equation \ref{eq:reduced mass}). This reduced mass can be used instead of particle mass in equation \ref{eq:acceleration} when considering relative motion of particles.
+\begin{align}
+F_1 &= m_1 a_1 \nonumber
+\\F_2 &= m_2 a_2 \nonumber
+\\F_1 &= -F_2 \nonumber
+\\a_{rel} &= a_2 - a_1 \nonumber
+\\&= \dfrac{F_2}{m_2} - \dfrac{F_1}{m_1} \nonumber
+\\&= \dfrac{F_2}{m_2} + \dfrac{F_2}{m_1} \nonumber
+\\&= F_2 \Big(\dfrac{1}{m_2} + \dfrac{1}{m_1}\Big) \nonumber
+\\&= F_2 \Big(\dfrac{m_1 + m_2}{m_1 m_2}\Big) \nonumber
+\\F_2 &= \Big(\dfrac{m_1 m_2}{m_1 + m_2}\Big) a_{rel} \label{eq:relative acceleration}
+\\m_{reduced} &= \dfrac{m_1 m_2}{m_1 + m_2} \label{eq:reduced mass}
+\end{align}
+\subsection{Coefficient of Restitution}
 \section{Rotation/Quaternions}
 \textit{$<$This will be completed later as it is not immediately relevant to the progress of the project.$>$}
 \section{Collision Detection}
