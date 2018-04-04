@@ -170,7 +170,17 @@ F_1 &= m_1 a_1 \nonumber
 \end{align}
 It should be noted that equation \ref{eq:reduced mass} reduces to $m_1$ if $m_2$ tends to infinity. This is useful when considering static particles with infinite density and is used extensively for verifying simulation results (see section \ref{sec:verification}).
 \subsection{Collision Duration}
+The collision duration is the time it takes for a collision to occur. This is important because if the simulation timestep is not low enough there won't be enough steps within a collision to produce accurate results. The collision duration is fully derived in Appendix \ref{ch:Derivations} (section \ref{der:collision duration} and is calculated using equation \ref{eq:collision duration}.
+\begin{equation}
+t_{col} = \sqrt{\dfrac{m}{k_e}}\sqrt{\pi^2 + ln(\epsilon)^2}
+\label{eq:collision duration}
+\end{equation}
 \subsection{Coefficient of Restitution}
+The coefficient of restitution is ratio of speed before and after a collision. For a damped collision the coefficient of restitution is between 0 and 1. The coefficient of restitution for a normal collision is fully derived in Appendix \ref{ch:Derivations} and is related to the damping coefficient, $\eta$, by equation \ref{eq:damping coefficient}.
+\begin{equation}
+\eta = - 2 ln(\epsilon) \sqrt{\dfrac{m k_e}{\pi^2 + ln(\epsilon)^2}}
+\label{eq:damping coefficient}
+\end{equation}
 \section{Rotation/Quaternions}
 \textit{$<$This will be completed later as it is not immediately relevant to the progress of the project.$>$}
 \section{Collision Detection}
@@ -186,7 +196,7 @@ The DEM model used in this project has stiff governing equations. This means tha
 \\The trapezoidal rule is an implicit integration method that uses the average of the current and next values. It has second order accuracy.
 \\For the implicit methods either an analytic solution to the implicit equations or a numerical solution can be used. For simplicity, only the functions that can form analytic solutions from the implicit equations will use the implicit methods.
 \subsection{Velocity}
-For equation \ref{eq:acceleration} the forward Euler method for integrating acceleration to get velocity at iteration n is shown in equation \ref{eq:Forward Euler Acceleration}. In this case the force, $F$, is a function of $u_n$.
+For equation \ref{eq:acceleration} the forward Euler method for integrating acceleration to get velocity at iteration $n + 1$ is shown in equation \ref{eq:Forward Euler Acceleration}. In this case the force, $F$, is a function of $u_n$.
 \begin{equation}
 u_{n+1} = u_{n} + \dfrac{F(u_n)}{m}\Delta t
 \label{eq:Forward Euler Acceleration}
@@ -197,11 +207,30 @@ u_{n+1} = u_{n} + \dfrac{F(u_{n+1})}{m}\Delta t
 \label{eq:Backward Euler Acceleration}
 \end{equation}
 For the DEM the total force is a combination of forces (see equation \ref{eq:total force}). Drag and gravity forces are only calculated once per iteration and so can be calculated at the same time as the velocity. However, collision forces are calculated multiple times per iteration to get contributions from all collisions and so cannot be easily calculated at the same time as the velocity. For this reason, the normal force, tangential force, and cohesion force are treated as fixed at the time of velocity calculation. Gravity is also fixed and so equation \ref{eq:total force} can be represented as in equation \ref{eq:force at iteration}. $F(u)$ can then be used in equation \ref{eq:Forward Euler Acceleration} or \ref{eq:Backward Euler Acceleration}.
+\begin{align}
+F(u) &= F_n + F_t + F_c + F_g + F_d(u)
+\label{eq:force at iteration} \\
+F_{fixed} &= F_n + F_t + F_c + F_g \\
+F(u) &= F_{fixed} + F_d(u) \nonumber \\
+\end{align}
+For equation \ref{eq:Forward Euler Acceleration} it is trivial to calculate the next velocity as the RHS is only dependant on $u_n$ which is known. This results in equation \ref{eq:explicit next velocity}.
 \begin{equation}
-F(u) = F_n + F_t + F_c + F_g + F_d(u)
-\label{eq:force at iteration}
+u_{n+1} = u_n + \dfrac{F_{fixed} + F_d(u_n)}{m} \Delta t \label{eq:explicit next velocity}
 \end{equation}
-\textit{To be continued... Further derivations of the final equations used and explanations therein.}
+Equation \ref{eq:Backward Euler Acceleration} must be rearranged to get $u_{n+1}$ as a function of $u_{n}$ only. This results in equation \ref{eq:implicit next velocity}.
+\begin{align}
+F(u_{n+1}) &= F_{fixed} + \dfrac{m}{\tau_p}(u_f - u_{n+1}) \nonumber \\
+u_{n+1} &= u_n + \dfrac{F_{fixed} + \dfrac{m}{\tau_p}(u_f - u_{n+1})}{m}\Delta t \nonumber \\
+&= u_n + \dfrac{F_{fixed}}{m}\Delta t + \dfrac{\Delta t}{\tau}(u_f - u_{n+1}) \nonumber \\
+u_{n+1} (1 + \dfrac{\Delta t}{\tau}) &= u_n + \dfrac{F_{fixed}}{m}\Delta t + \dfrac{\Delta t}{\tau}(u_f) \nonumber \\
+u_{n+1} &= \dfrac{\tau u_n + F_{fixed} \tau \Delta t / m + u_f \Delta t}{\tau + \Delta t} \label{eq:implicit next velocity}
+\end{align}
+Equation \ref{eq:implicit next velocity} can be rearranged to be in the same form as equation \ref{eq:explicit next velocity} as shown in equation \ref{eq:rearranged implicit next velocity}.
+\begin{equation}
+u_{n+1} = u_n + \Big(\dfrac{u_f - u_n + \tau F_{fixed} / m}{\tau + \Delta t}\Big)\Delta t
+\label{eq:rearranged implicit next velocity}
+\end{equation}
+A comparison of the accuracy of these integration schemes is in section \ref{sec:integration scheme comparison}.
 \subsection{Position}
 Equation \ref{eq:position} is a very simple differential equation that can be solved by integrating. Since the velocity does not directly depend on the position, and the velocity for the next iteration is calculated before the position, it is trivial to use the trapezoidal rule to calculate position. It has all of the advantages of accuracy without the disadvantage of increased complexity. The position can thus be calculated with equation \ref{eq:iterative position}.
 \begin{equation}
@@ -210,80 +239,23 @@ x_{n+1} = x_n + \dfrac{u_n + u_{n+1}}{2}\Delta t
 \end{equation}
 \section{Scheme Performance}
 \subsection{Comparison of Integration Schemes}
-\textit{This section will contain a comparison of explicit and implicit integration schemes. I've temporarily removed the current work on it because it isn't clear.}
-%There are three different methods of integrating drag. Firstly, there is the analytical solution, this is the exact solution to the model but cannot be done easily computationally. Secondly, there is the explicit numerical solution, this takes the current state and estimates the future state. Thirdly, there is the implicit numerical solution, this assumes the future state and integrates accordingly.
-%For a simple system with constant flow speed and no gravity, the system acceleration is described by equation \ref{eq:drag_acceleration}.
-%\begin{equation}
-%\dot{u} = \dfrac{v-u}{\tau}
-%\label{eq:drag_acceleration}
-%\end{equation}
-%Equation \ref{eq:drag_acceleration} can be solved to show that the analytical solution for the particle speed, $u$, is that in equation \ref{eq:analytical_drag_speed}.
-%\begin{equation}
-%u(t) = v(1 - e^{-\dfrac{t}{\tau}})
-%\label{eq:analytical_drag_speed}
-%\end{equation}
-%The explicit numerical integration method for equation \ref{eq:drag_acceleration} is that in equation \ref{eq:explicit_drag_speed}. Where $u_{n}$ is the current speed and $u_{n+1}$ is the speed after timestep $\Delta t$.
-%\begin{equation}
-%\dfrac{u_{n+1} - u_{n}}{\Delta t} = \dfrac{v - u_{n}}{\tau}
-%\label{eq:explicit_drag_speed}
-%\end{equation}
-%The implicit numerical integration method for equation \ref{eq:drag_acceleration} is that in equation \ref{eq:implicit_drag_speed}. Where $u_{n}$ is the current speed and $u_{n+1}$ is the speed after timestep $\Delta t$.
-%\begin{equation}
-%\dot{u} = \dfrac{u_{n+1} - u_{n}}{\Delta t} = \dfrac{v - u_{n+1}}{\tau}
-%\label{eq:implicit_drag_speed}
-%\end{equation}
-%Equation \ref{eq:implicit_drag_speed} can be rearranged to get an equation of the form $\dot{u} = f(u_{n})$ as shown in equation \ref{eq:implicit_drag_acceleration}.
-%\begin{equation}
-%\dot{u} = \dfrac{v - u_{n}}{\tau + \Delta t}
-%\label{eq:implicit_drag_acceleration}
-%\end{equation}
-%When these three methods are applied to the system they produce the results in figure \ref{fig:particle_speed_for_different_integrations}.
-%\begin{figure}[!ht]
-%\centering
-%\includegraphics[scale=0.75]{figures/ParticleSpeedWithVaryingIntegration.png}
-%\caption{A graph of particle speed against time for the three methods of integration.}
-%\label{fig:particle_speed_for_different_integrations}
-%\end{figure}
-%\\Comparing the explicit and implicit numerical integration to the analytical solution shows that the explicit method has an average percentage difference of 2.05\% and the implicit method has an average percentage difference of 1.85\% when the timestep is $0.1 s$.
-%\\The average percentage difference can be compared between the two methods with varying timesteps as shown in figure \ref{fig:avg_percent_diff_against_timestep}. This graph shows that the explicit method increases its average percentage difference approximately linearly with increasing timestep. The implicit method increases its average percentage difference non-linearly at a slower rate than the explicit method. This implies that the implicit method is more accurate than the explicit method, especially for higher timesteps.
-%\begin{figure}[!htb]
-%\centering
-%\includegraphics[scale=0.75]{figures/AveragePercentageDifferenceAgainstTimestep.png}
-%\caption{A graph of average percentage difference between the numerical method and analytical solution against varying timestep. The jaggedness of the lines is due to the discrete changes in timestep causing small rounding errors.}
-%\label{fig:avg_percent_diff_against_timestep}
-%\end{figure}
-%\\Unlike the explicit method, the implicit method depends on the other accelerations in the system. Equation \ref{eq:implicit_drag_acceleration} can be redefined to include these other accelerations as an extra $\dot{u}_{e}$ term as shown in equation \ref{eq:drag_acceleration_with_other_accelerations}.
-%\begin{equation}
-%\dot{u} = \dfrac{u_{n+1} - u_{n}}{\Delta t} = \dfrac{v - u_{n+1}}{\tau} + \dot{u}_{e}
-%\label{eq:drag_acceleration_with_other_accelerations}
-%\end{equation}
-%As before, equation \ref{eq:drag_acceleration_with_other_accelerations} can be rearranged to be in the form $\dot{u} = f(u_{n})$ as shown in equation \ref{eq:implicit_drag_acceleration_with_other_accelerations}. The derivation of this can be found in appendix \ref{sec:implicit_drag_accel_derivation}.
-%\begin{equation}
-%\dot{u} = \dfrac{v - u_{n} + \tau \dot{u}_{e}}{\tau + \Delta t}
-%\label{eq:implicit_drag_acceleration_with_other_accelerations}
-%\end{equation}
-%Equation \ref{eq:implicit_drag_acceleration_with_other_accelerations} can be applied to a particle falling under the effect of gravity through a stationary fluid. The results are shown in figure \ref{fig:fig:terminal_velocity_implicit_explicit}. As with the previous system, the explicit method has an average percentage difference of 2.05\% and the implicit method has an average percentage difference of 1.85\% when the timestep is $0.1 s$. This shows that the accuracy of the modified equation is consistent with that of equation \ref{eq:implicit_drag_acceleration}.
-%\begin{figure}[!htb]
-%\centering
-%\includegraphics[scale=0.75]{figures/TerminalVelocityImplicitExplicit.png}
-%\caption{A graph of particle speed against time for each method of integration using equation \ref{eq:implicit_drag_acceleration_with_other_accelerations}.}
-%\label{fig:fig:terminal_velocity_implicit_explicit}
-%\end{figure}
-\subsection{Timestep Stability}
-\textit{This will examine timestep stability. I've temporarily removed the current work on it because it isn't clear.}
-%\section{Numerical Integration} \label{sec:Numerical Integration}
-%\subsection{Velocity}
-%Velocity is iterated with equation \ref{eq:particle_velocity_iteration} where $\dot{u}$ is the acceleration obtained from the function call 'Particle.get{\_}accel()'.
-%\begin{equation}
-%u_{n+1} = u_{n} + \dot{u} \Delta t
-%\label{eq:particle_velocity_iteration}
-%\end{equation}
-%\subsection{Position}
-%Position is iterated with equation \ref{eq:particle_position_iteration}.
-%\begin{equation}
-%x_{n+1} = x_{n} + \dfrac{u_{n+1} + u_{n}}{2}\Delta t 
-%\label{eq:particle_position_iteration}
-%\end{equation}
+This analysis was performed using the Python implementation discussed in Chapter \ref{ch:Python Implementation}.
+\\Figure \ref{fig:terminal_velocity_implicit_explicit} shows the speed of a particle in a fluid starting from rest and accelerating to the fluid velocity. It shows that the explicit velocity equation (equation \ref{eq:explicit next velocity}) over-estimates the speed and the implicit velocity equation (equation \ref{eq:implicit next velocity}) under-estimates the speed. The error in the implicit result is less than the error in the explicit result.
+\\Figure \ref{fig:avg_percent_diff_against_timestep} shows the average percentage difference between each numerical method and the analytic solution for varying timestep. This shows that the explicit method is exactly first order accurate whereas the implicit result is a bit higher than first order accurate. This means that it is better to use the implicit method than the explicit method.
+\label{sec:integration scheme comparison}
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.6]{figures/TerminalVelocityImplicitExplicit.png}
+\caption{Particle speed against time with different integration schemes.}
+\label{fig:terminal_velocity_implicit_explicit}
+\end{figure}
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.6]{figures/AveragePercentageDifferenceAgainstTimestep.png}
+\caption{Average percentage difference between the numerical method and analytical solution against varying timestep. The jaggedness of the lines is due to the discrete changes in timestep causing small rounding errors.}
+\label{fig:avg_percent_diff_against_timestep}
+\end{figure}
+
 \section{Selected Iterative Functions}
 \textit{This section will provide a summary of all of the iterative functions used. This may not be necessary because these will be defined in previous sections. The only reason this section might exist is if a summary is useful to clarify it all.}
 \section{Verification}
@@ -551,7 +523,9 @@ The duration of a collision is considered to be the time for which the particles
 &t_{col} = \dfrac{0 + n \pi}{b} = \dfrac{n \pi}{b} \text{ , } n \in \mathbb{Z} \\
 &n = 0 \text{ Initial conditions.} \\
 &n = 1 \text{ First crossing after collision, physical result for $t_{col}$.} \\
-&t_{col} = \dfrac{\pi}{b} = \dfrac{2 \pi m}{\sqrt{4 m k_e - \eta ^ 2}}\\
+&t_{col} = \dfrac{\pi}{b} = \dfrac{2 \pi m}{\sqrt{4 m k_e - \eta ^ 2}} \\\\
+&\text{This can be rearranged to use the coefficient of restitution:} \\
+&t_{col} = \sqrt{\dfrac{m}{k_e}}\sqrt{\pi^2 + ln(\epsilon)^2}
 \end{align*}
 \section{Coefficient of Restitution}
 The coefficient of restitution, $\epsilon$, is the ratio of the speeds before ($u_0$) and after ($u_1$) the collision. Since the $x$ velocity after the collision is in the opposite direction to the $x$ velocity before the collision, $\epsilon = \dfrac{- u_1}{u_0}$. The velocity after the collision is determined by finding the velocity at $t = t_{col}$ where $t_{col}$ is the collision duration determined in section \ref{der:collision duration}.
@@ -619,6 +593,7 @@ Two important results from this solution are the impact time ($t_i$) and impact 
 \subsubsection{Impact Velocity ($u_i$)}
 \begin{align*}
 &u_i = \dfrac{u_0}{2} e^{t_i \sqrt{k_c / m}} + \dfrac{u_0}{2} e^{- t_i \sqrt{k_c / m}} \\
+&u_i = u_0 cosh\Big(t_i \sqrt{\dfrac{k_c}{m}}\Big) \\
 \end{align*}
 \subsection{Full Contact ($x < d_b$)}
 \begin{align*}
@@ -676,7 +651,7 @@ Taking the results from section \ref{der:normal collision with cohesion} it is k
 &\text{Thus, for a particle to stick in a collision:} \\
 &\dfrac{d_e - d_b}{u_r}\sqrt{\dfrac{k_c}{m}} > 1 \\
 &u_r = -\epsilon u_i \\
-&u_i = u_0 cosh\Big(t_i \dfrac{k_c}{m}\Big) = u_0 cosh\Big(sinh^{-1}\Big(\dfrac{d_b - d_e}{u_0}\sqrt{\dfrac{k_c}{m}}\Big)\Big) \\
+&u_i = u_0 cosh\Big(t_i \sqrt{\dfrac{k_c}{m}}\Big) = u_0 cosh\Big(sinh^{-1}\Big(\dfrac{d_b - d_e}{u_0}\sqrt{\dfrac{k_c}{m}}\Big)\Big) \\
 &\dfrac{d_e - d_b}{u_r}\sqrt{\dfrac{k_c}{m}} = \dfrac{d_e - d_b}{-\epsilon u_0 cosh\Big(sinh^{-1}\Big(\dfrac{d_b - d_e}{u_0}\sqrt{\dfrac{k_c}{m}}\Big)\Big)}\sqrt{\dfrac{k_c}{m}} \\
 &\dfrac{d_e - d_b}{u_r}\sqrt{\dfrac{k_c}{m}} = \dfrac{(d_b - d_e)\sqrt{k_c}}{\epsilon \sqrt{(d_b - d_e)^2 k_c + u_0 ^ 2 m}} \\\\
 &\text{Finding the dimensions of this number:} \\
