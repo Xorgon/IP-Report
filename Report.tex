@@ -168,6 +168,8 @@ F_1 &= m_1 a_1 \nonumber
 \\F_2 &= \Big(\dfrac{m_1 m_2}{m_1 + m_2}\Big) a_{rel} \label{eq:relative acceleration}
 \\m_{reduced} &= \dfrac{m_1 m_2}{m_1 + m_2} \label{eq:reduced mass}
 \end{align}
+It should be noted that equation \ref{eq:reduced mass} reduces to $m_1$ if $m_2$ tends to infinity. This is useful when considering static particles with infinite density and is used extensively for verifying simulation results (see section \ref{sec:verification}).
+\subsection{Collision Duration}
 \subsection{Coefficient of Restitution}
 \section{Rotation/Quaternions}
 \textit{$<$This will be completed later as it is not immediately relevant to the progress of the project.$>$}
@@ -194,7 +196,7 @@ u_{n+1} = u_{n} + \dfrac{F(u_n)}{m}\Delta t
 u_{n+1} = u_{n} + \dfrac{F(u_{n+1})}{m}\Delta t
 \label{eq:Backward Euler Acceleration}
 \end{equation}
-For the DEM the force is a combination of other forces (see equation \ref{eq:total force}). Drag and gravity forces are only calculated once per iteration and so can be calculated at the same time as the velocity. However, collision forces are calculated multiple times per iteration to get contributions from all collisions and so cannot be easily calculated at the same time as the velocity. For this reason, the normal force, tangential force, and cohesion force are treated as fixed at the time of velocity calculation. Gravity is also fixed and so equation \ref{eq:total force} can be represented as in equation \ref{eq:force at iteration}. $F(u)$ can then be used in equation \ref{eq:Forward Euler Acceleration} or \ref{eq:Backward Euler Acceleration}.
+For the DEM the total force is a combination of forces (see equation \ref{eq:total force}). Drag and gravity forces are only calculated once per iteration and so can be calculated at the same time as the velocity. However, collision forces are calculated multiple times per iteration to get contributions from all collisions and so cannot be easily calculated at the same time as the velocity. For this reason, the normal force, tangential force, and cohesion force are treated as fixed at the time of velocity calculation. Gravity is also fixed and so equation \ref{eq:total force} can be represented as in equation \ref{eq:force at iteration}. $F(u)$ can then be used in equation \ref{eq:Forward Euler Acceleration} or \ref{eq:Backward Euler Acceleration}.
 \begin{equation}
 F(u) = F_n + F_t + F_c + F_g + F_d(u)
 \label{eq:force at iteration}
@@ -284,6 +286,12 @@ x_{n+1} = x_n + \dfrac{u_n + u_{n+1}}{2}\Delta t
 %\end{equation}
 \section{Selected Iterative Functions}
 \textit{This section will provide a summary of all of the iterative functions used. This may not be necessary because these will be defined in previous sections. The only reason this section might exist is if a summary is useful to clarify it all.}
+\section{Verification}
+\label{sec:verification}
+\subsection{Drag}
+\subsection{Normal Collision}
+\subsection{Friction Sliding}
+\subsection{Cohesion Collision}
 \chapter{Python Implementation}
 \textit{The majority of this is disorganised. The main point is that the structure will be:
 \\- Overview (general overview of what and why)
@@ -478,6 +486,19 @@ If the static friction part of the model is removed then the results are those s
 \textit{General overview of agglomerates and why different properties are interesting.}
 \section{Simulation Setup}
 \textit{Initial conditions, properties to be varied, how this is defined in the program.}
+\subsection{Stoke's Number}
+\subsection{Stickyness Number}
+The Stickyness Number, Sy, describes how likely particles are to stick to each other through collisions. $L_e$ is the effect length and is usually $d_e - d_b$, where $d_e$ is the effect diameter and $d_b$ is the body diameter. $k_c$ is the cohesion stiffness from equation \ref{eq:cohesion force}. $\epsilon$ is the coefficient of restitution, $u$ is the average particle speed, and $m$ is the average particle mass.
+
+\begin{equation}
+Sy = \dfrac{L_e \sqrt{k_c}}{\epsilon \sqrt{L_e^2 k_c + u^2 m}}
+\end{equation}
+
+This number is derived from the analytic solution for a normal cohesive collision $<$\textit{TODO: Add section for this in appendix or verification}$>$. When the effect length is $d_e - d_b$ and $u$ is the initial collision speed, the Stickyness Number determines whether the particles will stick after the collision.
+\begin{align*}
+Sy &< 1 \textit{ Does not stick}
+\\ Sy & > 1 \textit{ Sticks}
+\end{align*}
 \section{Results}
 \textit{Presentation of results, graphs etc.}
 \section{Discussion}
@@ -489,15 +510,213 @@ If the static friction part of the model is removed then the results are those s
 \appendix
 \chapter{Derivations}
 \label{ch:Derivations}
-\section{Equation \ref{eq:implicit_drag_acceleration_with_other_accelerations}}
-\label{sec:implicit_drag_accel_derivation}
-\begin{align}
-\dot{u} &= \dfrac{v - u}{\tau} + \dot{u}_{e}
-\\\dfrac{u_{n+1} - u_{n}}{\Delta t} &= \dfrac{v - u_{n+1}}{\tau} + \dot{u}_{e}
-\\u_{n+1} &= \dfrac{\dfrac{v}{\tau} + \dfrac{u_{n}}{\Delta t} + \dot{u}_{e}}{\dfrac{1}{\Delta t} + \dfrac{1}{\tau}}
-\\\dfrac{u_{n+1} - u_{n}}{\Delta t} &= \dfrac{\Bigg(\dfrac{\dfrac{v}{\tau} + \dfrac{u_{n}}{\Delta t} + \dot{u}_{e}}{\dfrac{1}{\Delta t} + \dfrac{1}{\tau}}\Bigg) - u_{n}}{\Delta t}
-\\\dot{u} &= \dfrac{v - u_{n} + \tau \dot{u}_{e}}{\tau + \Delta t}
-\end{align}
+\section{Normal Collision}
+\label{der:normal collision}
+\begin{align*}
+&m \ddot{x} = k_e \delta - \eta \dot{x} \\
+&\delta = d_b - x \\
+&m \ddot{x} = k_e d_b - k_e x - \eta \dot{x} \\
+&m \ddot{x} + \eta \dot{x} + k_e x = d_b k_e \\\\
+&\textbf{Complementary Function} \\
+&\text{Auxilliary Equation: } mp^2 + \eta p + k_e = 0 \\
+&p_{1,2} = \dfrac{- \eta \pm \sqrt{\eta^2 - 4 m k_e}}{2 m} \\
+&\text{For this case $\eta ^ 2 > 4 m k_e$ so $p_1$ and $p_2$ are complex.} \\
+&\text{Let: } a = \dfrac{-\eta}{2m} \text{ and } b = \dfrac{\sqrt{4mk_e - \eta ^ 2}}{2m} \\
+&x = e^{at} (A_1 sin(bt) + A_2 cos(bt)) \\\\
+&\textbf{Particular Integral} \\
+&\text{Ansatz: } x = B \\
+&\dot{x} = \ddot{x} = 0 \\
+&k_e B = d_b k_e \\
+&B = d_b \\
+&x = d_b \\\\
+&\textbf{General Solution} \\
+&x = e^{at} (A_1 sin(bt) + A_2 cos(bt)) + d_b \\\\
+&x(0) = d_b = A_2 + d_b \\
+&A_2 = 0 \\\\
+&\dot{x}(0) = u_0 = A_1 b \\
+&A_1 = \dfrac{u_0}{b} \\\\
+&x = e^{at} \dfrac{u_0}{b} sin(bt) + d_b \\
+&\dot{x} = u_0 e^{at} (\dfrac{a}{b} sin(bt) + cos(bt))
+\end{align*}
+\section{Collision Duration}
+\label{der:collision duration}
+The duration of a collision is considered to be the time for which the particles' body surfaces are touching. For the normal collision used in section \ref{der:normal collision} this is from $t = 0$ until some $t_{col}$ when the moving particle returns to its starting position.
+\begin{align*}
+&\text{Let: } a = \dfrac{-\eta}{2m} \text{ and } b = \dfrac{\sqrt{4mk_e - \eta ^ 2}}{2m} \\
+&x = e^{at} \dfrac{u_0}{b} sin(bt) + d_b \\
+&\text{At $t = t_{col}$, $x = d_b$} \\
+&e^{a t_{col}} \dfrac{u_0}{b} sin(b t_{col}) = 0 \\
+&sin(bt_{col}) = 0 \\
+&t_{col} = \dfrac{sin^{-1}(0)}{b} \\
+&t_{col} = \dfrac{0 + n \pi}{b} = \dfrac{n \pi}{b} \text{ , } n \in \mathbb{Z} \\
+&n = 0 \text{ Initial conditions.} \\
+&n = 1 \text{ First crossing after collision, physical result for $t_{col}$.} \\
+&t_{col} = \dfrac{\pi}{b} = \dfrac{2 \pi m}{\sqrt{4 m k_e - \eta ^ 2}}\\
+\end{align*}
+\section{Coefficient of Restitution}
+The coefficient of restitution, $\epsilon$, is the ratio of the speeds before ($u_0$) and after ($u_1$) the collision. Since the $x$ velocity after the collision is in the opposite direction to the $x$ velocity before the collision, $\epsilon = \dfrac{- u_1}{u_0}$. The velocity after the collision is determined by finding the velocity at $t = t_{col}$ where $t_{col}$ is the collision duration determined in section \ref{der:collision duration}.
+\begin{align*}
+&\text{From section \ref{der:normal collision}: } \dot{x} = u_0 e^{at} (\dfrac{a}{b} sin(bt) + cos(bt)) \\
+&\text{From section \ref{der:collision duration}: } t_{col} = \dfrac{\pi}{b} \\
+&u_1 = u_0 e^{at_{col}} (\dfrac{a}{b} sin(bt_{col}) + cos(bt_{col})) \\
+&u_1 = u_0 e^{a \pi / b} (\dfrac{a}{b} sin(\pi) + cos(\pi)) \\
+&u_1 = - u_0 e^{a \pi / b} \\
+&\epsilon = \dfrac{- u_1}{u_0} = \dfrac{u_0 e^{a \pi / b}}{u_0} = e^{a \pi / b} \\\\
+&\text{To determine the damping coefficient for a given $\epsilon$:} \\
+&ln(\epsilon) = \dfrac{a \pi}{b} = \dfrac{- \eta \pi}{\sqrt{4 m k_e - \eta^2}} \\
+&\eta^2 = \dfrac{4 m k_e ln(\epsilon)^2}{\pi^2 + ln(\epsilon)^2} \\
+&\eta = \pm \sqrt{\dfrac{4 m k_e ln(\epsilon)^2}{\pi^2 + ln(\epsilon)^2}} \\
+&\text{$\eta$ must be +ve, $ln(\epsilon)$ is -ve so we take the -ve square root.} \\
+&\eta = - \sqrt{\dfrac{4 m k_e ln(\epsilon)^2}{\pi^2 + ln(\epsilon)^2}} 
+ = - 2 ln(\epsilon) \sqrt{\dfrac{m k_e}{\pi^2 + ln(\epsilon)^2}} \\
+&\text{This equation matches the one found in Tuley\cite{tuley}.}
+\end{align*}
+\section{Normal Collision with Cohesion}
+\label{der:normal collision with cohesion}
+A normal collision with cohesion has three regimes.
+\begin{align*}
+&m\dfrac{du}{dt} = 0 \text{ for } x > d_e \\
+&m\dfrac{du}{dt} = - k_c \delta_e \text{ for } d_e > x > d_b \\
+&m \dfrac{du}{dt} = m \ddot{x} = k_e \delta_b - \eta \dot{x} - k_c \delta_e \text{ for } x < d_b \\
+\end{align*}
+Two important definitions are those of body overlap ($\delta_b$) and effect overlap ($\delta_e$).
+\begin{align*}
+&\delta_b = d_b - x \\
+&\delta_e = d_e - x \\
+\end{align*}
+\subsection{Cohesion Only, Incoming ($d_e > x > d_b, u < 0$)}
+\begin{align*}
+&m \ddot{x} = - k_c \delta_e = - k_c (d_e - x) \\
+&m \ddot{x} - k_c x = - k_c d_e \\\\
+&\textbf{Complementary Function} \\
+&\text{Auxilliary Equation: } mp^2 - k_c = 0 \\
+&p = \pm \sqrt{\dfrac{k_c}{m}} \\ 
+&x = A_1 e^{t \sqrt{k_c / m}} + A_2 e^{- t \sqrt{k_c / m}} \\\\
+&\textbf{Particular Integral} \\
+&\text{Ansatz: } x = B \\
+&\dot{x} = \ddot{x} = 0 \\
+&- k_c x = - k_c d_e  \\
+&- k_c B = - k_c d_e \\
+& B = d_e \\\\
+&\textbf{General Solution} \\
+&x = A_1 e^{t \sqrt{k_c / m}} + A_2 e^{- t \sqrt{k_c / m}} + d_e \\
+&\dot{x} = \sqrt{\dfrac{k_c}{m}} A_1 e^{t \sqrt{k_c / m}} - \sqrt{\dfrac{k_c}{m}} A_2 e^{- t \sqrt{k_c / m}} \\\\
+&x(0) = d_e = A_1 + A_2 + d_e \\
+&A_1 = - A_2 \\\\
+&\dot{x}(0) = u_0 = \sqrt{\dfrac{k_c}{m}} A_1 - \sqrt{\dfrac{k_c}{m}} A_2 \\
+&A_1 = \dfrac{u_0}{2} \sqrt{\dfrac{m}{k_c}} \\\\
+&x = \dfrac{u_0}{2} \sqrt{\dfrac{m}{k_c}} e^{t \sqrt{k_c / m}} - \dfrac{u_0}{2} \sqrt{\dfrac{m}{k_c}} e^{- t \sqrt{k_c / m}} + d_e \\
+&\dot{x} = \dfrac{u_0}{2} e^{t \sqrt{k_c / m}} + \dfrac{u_0}{2} e^{- t \sqrt{k_c / m}} 
+\end{align*}
+Two important results from this solution are the impact time ($t_i$) and impact velocity ($u_i$).
+\subsubsection{Impact Time ($t_i$)}
+\begin{align*}
+&\text{At impact: } x = d_b \\
+&d_b = \dfrac{u_0}{2} \sqrt{\dfrac{m}{k_c}} e^{t_i \sqrt{k_c / m}} - \dfrac{u_0}{2} \sqrt{\dfrac{m}{k_c}} e^{- t_i \sqrt{k_c / m}} + d_e \\
+&\dfrac{2(d_b - d_e)}{u_0} \sqrt{\dfrac{k_c}{m}} = e^{t \sqrt{k_c / m}} - e^{-t \sqrt{k_c / m}}  = 2 sinh(\sqrt{\dfrac{k_c}{m}} t) \\
+&t_i = \sqrt{\dfrac{m}{k_c}} sinh^{-1}\Bigg(\dfrac{d_b - d_e}{u_0} \sqrt{\dfrac{k_c}{m}}\Bigg)
+\end{align*}
+\subsubsection{Impact Velocity ($u_i$)}
+\begin{align*}
+&u_i = \dfrac{u_0}{2} e^{t_i \sqrt{k_c / m}} + \dfrac{u_0}{2} e^{- t_i \sqrt{k_c / m}} \\
+\end{align*}
+\subsection{Full Contact ($x < d_b$)}
+\begin{align*}
+&m \dfrac{du}{dt} = m \ddot{x} = k_e \delta_b - \eta \dot{x} - k_c \delta_e \\
+&m\ddot{x} + \eta \dot{x} + (k_e - k_c) x = k_e d_b - k_c d_e \\\\
+&\textbf{Complementary Function} \\
+&\text{Auxilliary Equation: } mp^2 + \eta p + k_e - k_c = 0 \\
+&p_{1,2} = \dfrac{- \eta \pm \sqrt{\eta^2 - 4m(k_e - k_c)}}{2 m} \\
+&\text{For this case $k_e > k_c$ and $\eta ^ 2 > 4 m (k_e - k_c)$ so $p_1$ and $p_2$ are complex.} \\
+&\text{Let: } a = \dfrac{-\eta}{2m} \text{ and } b = \dfrac{\sqrt{4mk_e - \eta ^ 2}}{2m} \\
+&x = e^{at} (A_1 sin(bt) + A_2 cos (bt)) \\\\
+&\textbf{Particular Integral} \\
+&\text{Ansatz: } x = B \\
+&\dot{x} = \ddot{x} = 0 \\
+&(k_e - k_c)B = k_e d_b - k_c d_e \\
+& B = \dfrac{k_e d_b - k_c d_e}{k_e - k_c} \\\\
+&\textbf{General Solution} \\
+&x = e^{at} (A_1 sin(bt) + A_2 cos (bt)) + \dfrac{k_e d_b - k_c d_e}{k_e - k_c} \\
+&\dot{x} = e^{at}((A_1 a - A_2 b)sin(bt) + (A_1 b + A_2 a) cos(bt)) \\\\
+&\text{To simplify the result the $t$ here is $t - t_i$ in the overall collision.} \\
+&x(0) = d_b \\
+&A_2 + \dfrac{k_e d_b - k_c d_e}{k_e - k_c} = d_b \\
+&A_2 = \dfrac{k_c (d_e - d_b)}{k_e - k_c} \\\\
+&\text{Let: } c = \dfrac{k_c (d_e - d_b)}{k_e - k_c} \\\\
+&\dot{x}(0) = aA_2 + bA_1 = u_i \\
+&A_1 = \dfrac{u_i - aA_2}{b} = \dfrac{u_i - ac}{b} \\\\
+&x = e^{at} (\dfrac{u_i - ac}{b} sin(bt) + c cos (bt)) + \dfrac{k_e d_b - k_c d_e}{k_e - k_c} \\
+&\dot{x} = e^{at}\Big(\Big(\dfrac{u_i - ac}{b} a - \dfrac{k_c (d_e - d_b)}{k_e - k_c} b\Big)sin(bt) + \Big(\dfrac{u_i - ac}{b} b + \dfrac{k_c (d_e - d_b)}{k_e - k_c} a\Big) cos(bt)\Big) \\\\
+\end{align*}
+The position cannot be analytically solved for $t$ in order to find the initial return velocity. A reasonable estimation for this is to use $t_{col} = \dfrac{\pi}{b}$, and other results, from section \ref{der:normal collision}. Thus the initial return velocity, $u_r$, can be found to be $u_r = - \epsilon u_i$.
+\subsection{Cohesion Only, Returning ($d_e > x > d_b, u > 0$)}
+The General Solution to the returning equation is the same as the incoming equation.
+\begin{align*}
+&\textbf{General Solution} \\
+&x = A_1 e^{t \sqrt{k_c / m}} + A_2 e^{- t \sqrt{k_c / m}} + d_e \\
+&\dot{x} = \sqrt{\dfrac{k_c}{m}} A_1 e^{t \sqrt{k_c / m}} - \sqrt{\dfrac{k_c}{m}} A_2 e^{- t \sqrt{k_c / m}} \\\\
+&\text{To simplify the result the $t$ here is $t - t_r$ in the overall collision where $t_r$ is the return time.} \\
+&x(0) = d_b = A_1 + A_2 + d_e \\
+&A_1 + A_2 = (d_b - d_e)\\\\
+&\dot{x}(0) = u_r = \sqrt{\dfrac{k_c}{m}} A_1 - \sqrt{\dfrac{k_c}{m}} A_2 \\
+&A_1 = \dfrac{1}{2}\Big(d_b - d_e + u_r \sqrt{\dfrac{m}{k_c}} \Big) \\
+&A_2 = \dfrac{1}{2}\Big(d_b - d_e - u_r \sqrt{\dfrac{m}{k_c}} \Big) \\
+&A_1 = \dfrac{u_0}{2} \sqrt{\dfrac{m}{k_c}} \\\\
+&x = \dfrac{1}{2}(d_b - d_e)(e^{t \sqrt{k_c / m}} + e^{- t \sqrt{k_c / m}}) + \dfrac{1}{2}u_r\sqrt{\dfrac{m}{k_c}}(e^{t \sqrt{k_c / m}} - e^{-t \sqrt{k_c / m}}) + d_e \\
+&x = (d_b - d_e)cosh\Big(\sqrt{\dfrac{k_c}{m}} t\Big) + u_r \sqrt{\dfrac{m}{k_c}} sinh\Big(\sqrt{\dfrac{k_c}{m}}t\Big) + d_e \\
+&\dot{x} = \sqrt{\dfrac{k_c}{m}}(d_b - d_e)sinh\Big(\sqrt{\dfrac{k_c}{m}} t\Big) + u_r cosh\Big(\sqrt{\dfrac{k_c}{m}}t\Big) + d_e \\
+\end{align*}
+\section{Stickyness Number}
+Taking the results from section \ref{der:normal collision with cohesion} it is known that if the particle is to escape the collision the position, $x$, will at some point return to $d_e$. Thus:
+\begin{align*}
+&d_e = (d_b - d_e)cosh\Big(\sqrt{\dfrac{k_c}{m}} t\Big) + u_r \sqrt{\dfrac{m}{k_c}} sinh\Big(\sqrt{\dfrac{k_c}{m}}t\Big) + d_e \\
+&(d_b - d_e)cosh\Big(\sqrt{\dfrac{k_c}{m}} t\Big) + u_r \sqrt{\dfrac{m}{k_c}} sinh\Big(\sqrt{\dfrac{k_c}{m}}t\Big) = 0 \\
+&tanh(\sqrt{\dfrac{k_c}{m}} t) = \dfrac{d_e - d_b}{u_r \sqrt{\dfrac{m}{k_c}}} \\
+&\text{This only has a solution when the RHS is less than 1.} \\
+&\text{Thus, for a particle to stick in a collision:} \\
+&\dfrac{d_e - d_b}{u_r}\sqrt{\dfrac{k_c}{m}} > 1 \\
+&u_r = -\epsilon u_i \\
+&u_i = u_0 cosh\Big(t_i \dfrac{k_c}{m}\Big) = u_0 cosh\Big(sinh^{-1}\Big(\dfrac{d_b - d_e}{u_0}\sqrt{\dfrac{k_c}{m}}\Big)\Big) \\
+&\dfrac{d_e - d_b}{u_r}\sqrt{\dfrac{k_c}{m}} = \dfrac{d_e - d_b}{-\epsilon u_0 cosh\Big(sinh^{-1}\Big(\dfrac{d_b - d_e}{u_0}\sqrt{\dfrac{k_c}{m}}\Big)\Big)}\sqrt{\dfrac{k_c}{m}} \\
+&\dfrac{d_e - d_b}{u_r}\sqrt{\dfrac{k_c}{m}} = \dfrac{(d_b - d_e)\sqrt{k_c}}{\epsilon \sqrt{(d_b - d_e)^2 k_c + u_0 ^ 2 m}} \\\\
+&\text{Finding the dimensions of this number:} \\
+&\text{Dimensions of stiffness: } [M][L][T]^{-2}[L]^{-1} = [M][T]^{-2} \\
+&\dfrac{[L]([M][T]^{-2})^{0.5}}{[1]([L]^2[M][T]^{-2} + [L]^2[T]^{-2}[M])^{0.5}} \\
+& = \dfrac{[L][M]^{0.5}[T]^{-1}}{[L][T]^{-1}[M]^{0.5}} = [1] \\
+&\text{This shows that the number is dimensionless.}
+\end{align*}
+\section{Dynamic Friction Sliding}
+\begin{align*}
+&F_n = mg \\
+&F_t^{dynamic} = - \mu |F_n| \\
+&\dfrac{du}{dt} = \ddot{x} = \dfrac{- \mu m g}{m} = - \mu g\\
+&\dot{x} = - \mu g t + u_0 \\
+&x = \dfrac{- \mu g}{2}t^2 + u_0 t + x_0 \\
+\end{align*}
+\section{Particle Drag}
+\begin{align*}
+&m\dfrac{du}{dt} = \dfrac{m}{\tau}(u_f - u) \\
+&\ddot{x} + \dfrac{1}{\tau} \dot{x} = \dfrac{u_f}{\tau} \\\\
+&\textbf{Complementary Function} \\
+&\text{Auxilliary Equation: } p^2 + \dfrac{1}{\tau}p = 0 \\
+&p_1 = 0, p_2 = - \dfrac{1}{\tau} \\
+&x = A_1e^{0t} + A_2e^{-t/\tau} \\\\
+&\textbf{Particular Integral} \\
+&\text{Ansatz: } x = Bt \\
+&\dot{x} = B \\
+&\ddot{x} = 0 \\
+&\dfrac{B}{\tau} = \dfrac{u_f}{\tau} \\
+&B = u_f \\\\
+&\textbf{General Solution} \\
+&x = A_1 + A_2 e^{-t /\tau} + u_f t \\
+&\dot{x} = \dfrac{-A_2}{\tau} e^{-t/\tau} + u_f \\\\
+&x(0) = 0 = A_1 + A_2 \\
+&\dot{x}(0) = 0 = \dfrac{-A_2}{\tau} + u_f \\
+&A_2 = u_f \tau \\
+&A_1 = - u_f \tau \\\\
+&x = u_f \tau (e^{-t/\tau} - 1) + u_f t \\
+&\dot{x} = u_f (1 - e^{-t/\tau}) \\
+\end{align*}
 \bibliography{references}
 \bibliographystyle{unsrt}
 \end{document}
