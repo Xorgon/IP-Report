@@ -1,0 +1,20 @@
+\usetikzlibrary{arrows}
+\begin{tikzpicture}
+
+\draw  (0,0) ellipse (1 and 1);
+\draw  (2,0) ellipse (1 and 1);
+\node (v5) at (0,0) {p1};
+\node (v1) at (2,0) {p2};
+\node (v4) at (-1,-1.5) {};
+\node (v3) at (3,-1.5) {+ve};
+\draw [-triangle 60] (v4) edge (v3);
+\node (v6) at (0,-1.5) {+};
+\node (v7) at (2,-1.5) {+};
+\node at (0,-2) {0};
+\node at (2,-2) {x};
+\draw [dashed] (v5) edge (v6);
+\draw [dashed] (v1) edge (v7);
+\node (v2) at (2,1.5) {$u_0$};
+\node (v8) at (1,1.5) {};
+\draw [-triangle 60] (v2) edge (v8);
+\end{tikzpicture}

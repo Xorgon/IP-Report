@@ -1,0 +1,22 @@
+\usetikzlibrary{arrows}
+\begin{tikzpicture}
+
+\draw  (0,0) ellipse (1 and 1);
+\draw  (3,0) ellipse (1 and 1);
+\draw  [dashed](3,0) ellipse (1.5 and 1.5);
+\draw  [dashed](0,0) ellipse (1.5 and 1.5);
+\node (v5) at (0,0) {p1};
+\node (v1) at (3,0) {p2};
+\node (v4) at (-1,-2.5) {};
+\node (v3) at (4,-2.5) {+ve};
+\draw [-triangle 60] (v4) edge (v3);
+\node (v6) at (0,-2.5) {+};
+\node (v7) at (3,-2.5) {+};
+\node at (0,-3) {0};
+\node at (3,-3) {x};
+\draw [dashed] (v5) edge (v6);
+\draw [dashed] (v1) edge (v7);
+\node (v2) at (3,2) {$u_0$};
+\node (v8) at (2,2) {};
+\draw [-triangle 60] (v2) edge (v8);
+\end{tikzpicture}

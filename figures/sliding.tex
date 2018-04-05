@@ -1,0 +1,17 @@
+\usetikzlibrary{arrows}
+\begin{tikzpicture}
+
+\node (v1) at (-4.5,-1) {};
+\node (v2) at (1.5,-1) {wall};
+\draw (v1) edge (v2);
+\draw (-3.5,0) ellipse (1 and 1);
+\node (v3) at (-3.5,1.5) {$u_0$};
+\node (v4) at (-2.5,1.5) {};
+\draw [-triangle 60] (v3) edge (v4);
+\node (v5) at (-4.5,-2) {};
+\node (v6) at (-0.5,-2) {+ve};
+\draw [-triangle 60] (v5) edge (v6);
+\node at (-3.5,-2) {+};
+\node at (-3.5,-2.5) {0};
+\node at (-3.5,0) {p1};
+\end{tikzpicture}

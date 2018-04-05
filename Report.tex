@@ -10,6 +10,7 @@
 \usepackage{graphicx}
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
 \usepackage{tikz}
+\usetikzlibrary{arrows}
 \usepackage[intoc, english]{nomencl}
 \makenomenclature
 \author{Elijah Andrews}
@@ -170,13 +171,13 @@ F_1 &= m_1 a_1 \nonumber
 \end{align}
 It should be noted that equation \ref{eq:reduced mass} reduces to $m_1$ if $m_2$ tends to infinity. This is useful when considering static particles with infinite density and is used extensively for verifying simulation results (see section \ref{sec:verification}).
 \subsection{Collision Duration}
-The collision duration is the time it takes for a collision to occur. This is important because if the simulation timestep is not low enough there won't be enough steps within a collision to produce accurate results. The collision duration is fully derived in Appendix \ref{ch:Derivations} (section \ref{der:collision duration} and is calculated using equation \ref{eq:collision duration}.
+The collision duration is the time it takes for a collision to occur. This is important because if the simulation timestep is not low enough there won't be enough steps within a collision to produce accurate results. The collision duration is fully derived in section \ref{der:collision duration} and is calculated using equation \ref{eq:collision duration}.
 \begin{equation}
 t_{col} = \sqrt{\dfrac{m}{k_e}}\sqrt{\pi^2 + ln(\epsilon)^2}
 \label{eq:collision duration}
 \end{equation}
 \subsection{Coefficient of Restitution}
-The coefficient of restitution is ratio of speed before and after a collision. For a damped collision the coefficient of restitution is between 0 and 1. The coefficient of restitution for a normal collision is fully derived in Appendix \ref{ch:Derivations} and is related to the damping coefficient, $\eta$, by equation \ref{eq:damping coefficient}.
+The coefficient of restitution is ratio of speed before and after a collision. For a damped collision the coefficient of restitution is between 0 and 1. The coefficient of restitution for a normal collision is fully derived in Appendix \ref{ch:Derivations} and is related to the damping coefficient, $\eta$, by equation \ref{eq:damping coefficient}. This is derived in section \ref{der:coefficient of restitution}.
 \begin{equation}
 \eta = - 2 ln(\epsilon) \sqrt{\dfrac{m k_e}{\pi^2 + ln(\epsilon)^2}}
 \label{eq:damping coefficient}
@@ -206,12 +207,12 @@ u_{n+1} = u_{n} + \dfrac{F(u_n)}{m}\Delta t
 u_{n+1} = u_{n} + \dfrac{F(u_{n+1})}{m}\Delta t
 \label{eq:Backward Euler Acceleration}
 \end{equation}
-For the DEM the total force is a combination of forces (see equation \ref{eq:total force}). Drag and gravity forces are only calculated once per iteration and so can be calculated at the same time as the velocity. However, collision forces are calculated multiple times per iteration to get contributions from all collisions and so cannot be easily calculated at the same time as the velocity. For this reason, the normal force, tangential force, and cohesion force are treated as fixed at the time of velocity calculation. Gravity is also fixed and so equation \ref{eq:total force} can be represented as in equation \ref{eq:force at iteration}. $F(u)$ can then be used in equation \ref{eq:Forward Euler Acceleration} or \ref{eq:Backward Euler Acceleration}.
+For the DEM the total force is a combination of forces (see equation \ref{eq:total force}). Drag and gravity forces are only calculated once per iteration and so can be calculated at the same time as the velocity. However, collision forces are calculated multiple times per iteration to get contributions from all collisions and so cannot be easily calculated at the same time as the velocity. For this reason, the normal force, tangential force, and cohesion force are treated as fixed at the time of velocity calculation. Gravity is also fixed and so equation \ref{eq:total force} can be represented as in equations \ref{eq:force at iteration} and \ref{eq:fixed force plus}. $F(u)$ can then be used in equation \ref{eq:Forward Euler Acceleration} or \ref{eq:Backward Euler Acceleration}.
 \begin{align}
 F(u) &= F_n + F_t + F_c + F_g + F_d(u)
 \label{eq:force at iteration} \\
 F_{fixed} &= F_n + F_t + F_c + F_g \\
-F(u) &= F_{fixed} + F_d(u) \nonumber \\
+F(u) &= F_{fixed} + F_d(u) \label{eq:fixed force plus}
 \end{align}
 For equation \ref{eq:Forward Euler Acceleration} it is trivial to calculate the next velocity as the RHS is only dependant on $u_n$ which is known. This results in equation \ref{eq:explicit next velocity}.
 \begin{equation}
@@ -237,12 +238,11 @@ Equation \ref{eq:position} is a very simple differential equation that can be so
 x_{n+1} = x_n + \dfrac{u_n + u_{n+1}}{2}\Delta t
 \label{eq:iterative position}
 \end{equation}
-\section{Scheme Performance}
 \subsection{Comparison of Integration Schemes}
+\label{sec:integration scheme comparison}
 This analysis was performed using the Python implementation discussed in Chapter \ref{ch:Python Implementation}.
 \\Figure \ref{fig:terminal_velocity_implicit_explicit} shows the speed of a particle in a fluid starting from rest and accelerating to the fluid velocity. It shows that the explicit velocity equation (equation \ref{eq:explicit next velocity}) over-estimates the speed and the implicit velocity equation (equation \ref{eq:implicit next velocity}) under-estimates the speed. The error in the implicit result is less than the error in the explicit result.
 \\Figure \ref{fig:avg_percent_diff_against_timestep} shows the average percentage difference between each numerical method and the analytic solution for varying timestep. This shows that the explicit method is exactly first order accurate whereas the implicit result is a bit higher than first order accurate. This means that it is better to use the implicit method than the explicit method.
-\label{sec:integration scheme comparison}
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.6]{figures/TerminalVelocityImplicitExplicit.png}
@@ -261,9 +261,55 @@ This analysis was performed using the Python implementation discussed in Chapter
 \section{Verification}
 \label{sec:verification}
 \subsection{Drag}
+The drag verification case is a particle in a fluid. The fluid has a constant velocity in the x direction denoted $u_f$. There is no gravity and no other particles are present. The particle accelerates to the speed of the fluid.
+\\The position and velocity of the particle are determined by equations \ref{eq:drag position} and \ref{eq:drag velocity}, respectively. These equations are derived in section \ref{der:drag}.
+\begin{align}
+&x = u_f \tau (e^{-t/\tau} - 1) + u_f t \label{eq:drag position} \\
+&\dot{x} = u_f (1 - e^{-t/\tau}) \label{eq:drag velocity} \\
+\end{align}
 \subsection{Normal Collision}
+\label{sec:normal collision verification}
+The normal collision verification case is the most simple normal collision. The first particle (p1) has infinite density and so is fixed in space. The second particle (p2) has an initial velocity, $u_0$, towards the first particle and starts at $x = d_b$ so that the body surfaces are just touching. There is no drag, no gravity, and no cohesion. This arrangement is depicted in Figure \ref{fig:normal collision}.
+\\The position and velocity of the second particle are determined by equations \ref{eq:normal collision position} and \ref{eq:normal collision velocity}, respectively. These equations are derived in section \ref{der:normal collision}.
+\begin{align}
+&x = e^{at} \dfrac{u_0}{b} sin(bt) + d_b \label{eq:normal collision position} \\
+&\dot{x} = u_0 e^{at} (\dfrac{a}{b} sin(bt) + cos(bt)) \label{eq:normal collision velocity}
+\end{align}
+\begin{figure}[!ht]
+\centering
+\input{figures/normal_collision.tex}
+\caption{The initial setup of the normal collision verification case.}
+\label{fig:normal collision}
+\end{figure}
 \subsection{Friction Sliding}
-\subsection{Cohesion Collision}
+The friction sliding test case is ...
+\begin{figure}[!ht]
+\centering
+\input{figures/sliding.tex}
+\caption{The initial setup of the friction sliding verification case.}
+\label{fig:friction sliding}
+\end{figure}
+\subsection{Normal Collision with Cohesion}
+The cohesion collision verification case is very similar to the normal collision verification case (section \ref{sec:normal collision verification}. The first particle (p1) has infinite density and so is fixed in space. The second particle (p2) has an initial velocity, $u_0$, towards the first particle and starts at $x = d_e$ so that the effect surfaces are just touching. There is no drag and no gravity. This arrangement is depicted in Figure \ref{fig:cohesion collision}.
+\\The position and velocity of the second particle are determined by equations \ref{eq:normal collision position} and \ref{eq:normal collision velocity}, respectively. These equations are derived in section \ref{der:normal collision with cohesion}.
+\begin{align}
+&\text{When $d_e > x > d_b, u < 0$:} \nonumber \\
+&x = \dfrac{u_0}{2} \sqrt{\dfrac{m}{k_c}} e^{t \sqrt{k_c / m}} - \dfrac{u_0}{2} \sqrt{\dfrac{m}{k_c}} e^{- t \sqrt{k_c / m}} + d_e \\
+&\dot{x} = \dfrac{u_0}{2} e^{t \sqrt{k_c / m}} + \dfrac{u_0}{2} e^{- t \sqrt{k_c / m}} \\ \nonumber \\
+&\text{When $x < d_b$:} \nonumber \\
+&x = e^{at} (\dfrac{u_i - ac}{b} sin(bt) + c cos (bt)) + \dfrac{k_e d_b - k_c d_e}{k_e - k_c} \\
+&\dot{x} = e^{at}\Big(\Big(\dfrac{u_i - ac}{b} a - \dfrac{k_c (d_e - d_b)}{k_e - k_c} b\Big)sin(bt) + \Big(\dfrac{u_i - ac}{b} b + \dfrac{k_c (d_e - d_b)}{k_e - k_c} a\Big) cos(bt)\Big) \\ \nonumber \\
+&\text{When $d_e > x > d_b, u > 0$:} \nonumber \\
+&x = e^{at} (\dfrac{u_i - ac}{b} sin(bt) + c cos (bt)) + \dfrac{k_e d_b - k_c d_e}{k_e - k_c} \\
+&\dot{x} = e^{at}\Big(\Big(\dfrac{u_i - ac}{b} a - \dfrac{k_c (d_e - d_b)}{k_e - k_c} b\Big)sin(bt) + \Big(\dfrac{u_i - ac}{b} b + \dfrac{k_c (d_e - d_b)}{k_e - k_c} a\Big) cos(bt)\Big) \\ \nonumber \\
+&\text{Where: } a = \dfrac{-\eta}{2m} \text{,    } b = \dfrac{\sqrt{4mk_e - \eta ^ 2}}{2m} \text{,    } c = \dfrac{k_c (d_e - d_b)}{k_e - k_c} \nonumber
+\end{align}
+\begin{figure}[!ht]
+\centering
+\input{figures/cohesion_collision.tex}
+\caption{The initial setup of the cohesion collision verification case.}
+\label{fig:cohesion collision}
+\end{figure}
 \chapter{Python Implementation}
 \textit{The majority of this is disorganised. The main point is that the structure will be:
 \\- Overview (general overview of what and why)
@@ -305,52 +351,6 @@ This is calculated using a flow field calculation function that is passed into t
 Gravity is treated in a similar manner to drag. A gravity function can be passed into the Particle object upon instantiation. Although this defaults to a simple -9.81$ms^{-2}$, it can be chosen to simulate a rotating frame of reference or other complex configurations. A rotating frame of reference has been implemented in the ``gravity\_shift\_closed\_box'' example simulation. %TODO Reference github
 \subsubsection{DEM Forces}
 The DEM forces that are calculated in collisions are stored in an array within the Particle object. When the particle is iterated the array is added together and used in the integration calculation. After this calculation the array is cleared so that forces don't get incorrectly added multiple times. This configuration makes it simple to add and remove forces to the simulation whenever necessary and could also be used in general to add any force to the particle.
-\section{Verification}
-To asses the accuracy of the implementation a series of cases have been tested and compared to analytical solutions of the model.
-\subsection{Settling Overlap}
-In this case two particles are used. The first particle is an ordinary particle acting under the effects of gravity. The second particle, placed below the first particle, is a particle with quasi-infinite density without being affected by gravity. As time increases the first particle bounces on the second particle until it eventually comes to rest with some overlap with the second particle.\\
-\begin{figure}[!htb]
-\centering
-\begin{tikzpicture}
-\filldraw[color=black, fill=gray, thick] circle (1);
-\draw  (0, 1.9) circle (1);
-\draw (0, 1) -- (1.5, 1);
-\draw (0, 0.9) -- (1.5, 0.9);
-\draw[->] (1.4, 1.5) -- (1.4, 1);
-\draw[->] (1.4, 0.4) -- (1.4, 0.9);
-\filldraw[black] (1.4, 1.2) node[anchor=west] {$\delta$};
-\end{tikzpicture}
-\caption{A particle, under the effect of gravity, resting upon a second particle of infinite density, unaffected by gravity. Overlap, $\delta$, is labelled and exaggerated for clarity.}
-\end{figure}
-\\For the particle to be at rest the particle's gravity must be equal to the normal force from the DEM.
-\begin{equation}
-F_{g} = F_{n}
-\end{equation}
-\begin{equation}
-mg = k_{e}\delta - \eta u
-\end{equation}
-To get an equation for overlap, $\delta$, the equation is simplified and rearranged. The speed, $u$, is 0 at rest.
-\begin{equation}
-\delta = \dfrac{mg}{k_{e}}
-\end{equation} 
-Taking particle diameter to be 0.1 $m$ and particle density to be 2000 $kg m^{-3}$, the particle mass is 1.047 $kg$. Gravity is taken to be 9.81 $m s^{-2}$ and model spring stiffness is $10^{5}$.
-\begin{equation}
-\delta = \dfrac{1.047 * 9.81}{10^{5}} = 1.027 * 10^{-4}
-\end{equation} 
-Running a simulation with these parameters also yields an overlap of $1.027 * 10^{-4}$. Comparing simulation results with high precision overlap prediction shows that the simulation result is within $2.1 * 10^{-11}\%$ of the predicted value.
-\subsubsection{Timestep stability}
-This result can also be compared for varying timesteps to asses the stability of the implementation. Figure \ref{fig:overlap_percentage_error_against_timestep} shows very stable results up until a timestep of approximately 0.00097.
-\begin{figure}[!htb]
-\centering
-\includegraphics[scale=0.75]{figures/ParticleBounceTimestepAgainstPercentageError.png}
-\caption{A graph of overlap percentage error against time step.}
-\label{fig:overlap_percentage_error_against_timestep}
-\end{figure}
-\subsection{Timestep Stability}
-Collisions go boom if timestep is too high etc. %<Test against bouncing or something>
-The stiffer the collisions the smaller the timestep must be to maintain physical results.
-This can be spotted and logged if $E_{k}$ is higher after collision than before.
-%TODO Run a simulation of timestep against stiffness.
 \section{Optimization and Performance}
 \chapter{OpenCL Implementation}
 \label{ch:OpenCL Implementation}
@@ -510,7 +510,7 @@ Sy &< 1 \textit{ Does not stick}
 &x = e^{at} \dfrac{u_0}{b} sin(bt) + d_b \\
 &\dot{x} = u_0 e^{at} (\dfrac{a}{b} sin(bt) + cos(bt))
 \end{align*}
-\section{Collision Duration}
+\subsection{Collision Duration}
 \label{der:collision duration}
 The duration of a collision is considered to be the time for which the particles' body surfaces are touching. For the normal collision used in section \ref{der:normal collision} this is from $t = 0$ until some $t_{col}$ when the moving particle returns to its starting position.
 \begin{align*}
@@ -527,7 +527,8 @@ The duration of a collision is considered to be the time for which the particles
 &\text{This can be rearranged to use the coefficient of restitution:} \\
 &t_{col} = \sqrt{\dfrac{m}{k_e}}\sqrt{\pi^2 + ln(\epsilon)^2}
 \end{align*}
-\section{Coefficient of Restitution}
+\subsection{Coefficient of Restitution}
+\label{der:coefficient of restitution}
 The coefficient of restitution, $\epsilon$, is the ratio of the speeds before ($u_0$) and after ($u_1$) the collision. Since the $x$ velocity after the collision is in the opposite direction to the $x$ velocity before the collision, $\epsilon = \dfrac{- u_1}{u_0}$. The velocity after the collision is determined by finding the velocity at $t = t_{col}$ where $t_{col}$ is the collision duration determined in section \ref{der:collision duration}.
 \begin{align*}
 &\text{From section \ref{der:normal collision}: } \dot{x} = u_0 e^{at} (\dfrac{a}{b} sin(bt) + cos(bt)) \\
@@ -669,6 +670,7 @@ Taking the results from section \ref{der:normal collision with cohesion} it is k
 &x = \dfrac{- \mu g}{2}t^2 + u_0 t + x_0 \\
 \end{align*}
 \section{Particle Drag}
+\label{der:drag}
 \begin{align*}
 &m\dfrac{du}{dt} = \dfrac{m}{\tau}(u_f - u) \\
 &\ddot{x} + \dfrac{1}{\tau} \dot{x} = \dfrac{u_f}{\tau} \\\\
