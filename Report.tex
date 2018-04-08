@@ -10,12 +10,30 @@
 \usepackage{graphicx}
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
 \usepackage{tikz}
+\usepackage{csvsimple}
 \usetikzlibrary{arrows}
 \usepackage[intoc, english]{nomencl}
 \makenomenclature
 \author{Elijah Andrews}
 \title{Implementing the Discrete Element Method with OpenCL for GPUs}
 \makeindex
+
+\makeatletter
+\AtBeginDocument{%
+  \expandafter\renewcommand\expandafter\subsection\expandafter{%
+    \expandafter\@fb@secFB\subsection
+  }%
+}
+\makeatother
+
+\makeatletter
+\AtBeginDocument{%
+  \expandafter\renewcommand\expandafter\subsubsection\expandafter{%
+    \expandafter\@fb@secFB\subsubsection
+  }%
+}
+\makeatother
+
 \begin{document}
 \tableofcontents
 \chapter*{Abstract}
@@ -294,14 +312,14 @@ The cohesion collision verification case is very similar to the normal collision
 \\The position and velocity of the second particle are determined by equations \ref{eq:normal collision position} and \ref{eq:normal collision velocity}, respectively. These equations are derived in section \ref{der:normal collision with cohesion}.
 \begin{align}
 &\text{When $d_e > x > d_b, u < 0$:} \nonumber \\
-&x = \dfrac{u_0}{2} \sqrt{\dfrac{m}{k_c}} e^{t \sqrt{k_c / m}} - \dfrac{u_0}{2} \sqrt{\dfrac{m}{k_c}} e^{- t \sqrt{k_c / m}} + d_e \\
-&\dot{x} = \dfrac{u_0}{2} e^{t \sqrt{k_c / m}} + \dfrac{u_0}{2} e^{- t \sqrt{k_c / m}} \\ \nonumber \\
+&x = u_0 \sqrt{\dfrac{m}{k_c}} sinh\Big(t\sqrt{\dfrac{k_c}{m}}\Big) + d_e \\
+&\dot{x} = u_0 cos h\Big(t\sqrt{\dfrac{k_c}{m}}\Big) \\ \nonumber \\
 &\text{When $x < d_b$:} \nonumber \\
 &x = e^{at} (\dfrac{u_i - ac}{b} sin(bt) + c cos (bt)) + \dfrac{k_e d_b - k_c d_e}{k_e - k_c} \\
-&\dot{x} = e^{at}\Big(\Big(\dfrac{u_i - ac}{b} a - \dfrac{k_c (d_e - d_b)}{k_e - k_c} b\Big)sin(bt) + \Big(\dfrac{u_i - ac}{b} b + \dfrac{k_c (d_e - d_b)}{k_e - k_c} a\Big) cos(bt)\Big) \\ \nonumber \\
+&\dot{x} = e^{at}\Big(\Big(\dfrac{u_i - ac}{b} a - c b\Big)sin(bt) + u_i cos(bt)\Big) \\ \nonumber \\
 &\text{When $d_e > x > d_b, u > 0$:} \nonumber \\
-&x = e^{at} (\dfrac{u_i - ac}{b} sin(bt) + c cos (bt)) + \dfrac{k_e d_b - k_c d_e}{k_e - k_c} \\
-&\dot{x} = e^{at}\Big(\Big(\dfrac{u_i - ac}{b} a - \dfrac{k_c (d_e - d_b)}{k_e - k_c} b\Big)sin(bt) + \Big(\dfrac{u_i - ac}{b} b + \dfrac{k_c (d_e - d_b)}{k_e - k_c} a\Big) cos(bt)\Big) \\ \nonumber \\
+&x = (d_b - d_e)cosh\Big(\sqrt{\dfrac{k_c}{m}} t\Big) + u_r \sqrt{\dfrac{m}{k_c}} sinh\Big(\sqrt{\dfrac{k_c}{m}}t\Big) + d_e \\
+&\dot{x} = \sqrt{\dfrac{k_c}{m}}(d_b - d_e)sinh\Big(\sqrt{\dfrac{k_c}{m}} t\Big) + u_r cosh\Big(\sqrt{\dfrac{k_c}{m}}t\Big) + d_e \\ \nonumber \\
 &\text{Where: } a = \dfrac{-\eta}{2m} \text{,    } b = \dfrac{\sqrt{4mk_e - \eta ^ 2}}{2m} \text{,    } c = \dfrac{k_c (d_e - d_b)}{k_e - k_c} \nonumber
 \end{align}
 \begin{figure}[!ht]
@@ -352,6 +370,29 @@ Gravity is treated in a similar manner to drag. A gravity function can be passed
 \subsubsection{DEM Forces}
 The DEM forces that are calculated in collisions are stored in an array within the Particle object. When the particle is iterated the array is added together and used in the integration calculation. After this calculation the array is cleared so that forces don't get incorrectly added multiple times. This configuration makes it simple to add and remove forces to the simulation whenever necessary and could also be used in general to add any force to the particle.
 \section{Optimization and Performance}
+\section{Verification}
+\subsection{Drag}
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.5]{figures/opencl_verification/drag_verification.png}
+\caption{Normalized position and speed against time of a particle in a moving fluid.}
+\label{fig:python_drag_verification}
+\end{figure}
+\subsection{Normal Collision}
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.5]{figures/python_verification/normal_force_verification.png}
+\caption{Normalized position and speed against time during a normal collision.}
+\label{fig:python_normal_force_verification}
+\end{figure}
+\subsection{Friction Sliding}
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.4]{figures/python_verification/friction_verification.png}
+\includegraphics[scale=0.4]{figures/python_verification/friction_verification_zoomed.png}
+\caption{Normalized position and speed against time during a normal collision.}
+\label{fig:python_friction_verification}
+\end{figure}
 \chapter{OpenCL Implementation}
 \label{ch:OpenCL Implementation}
 \textit{This chapter follows a very similar structure to the Python Implementation chapter.}
@@ -422,37 +463,77 @@ Often a framework is used for unit testing, however there isn't a quick, easy fr
 \\To make it easy to run these tests repeatedly 'run\_tests.c' has been created to run all of the tests and indicate which, if any, fails. A similar implementation can be executed at runtime from a simulation to ensure that all tests are passed before starting a simulation run.
 \section{Verification}
 \textit{Each of the subsections in this section will have details of the equations used and the significance of the results.}
-\subsection{Normal Force}
-\begin{figure}[!htb]
-\centering
-\includegraphics[scale=0.5]{figures/normal_force_verification.png}
-\caption{Normalized position and speed against time during a normal collision.}
-\label{fig:normal_force_verification}
-\end{figure}
-\subsection{Friction Force}
-The analytic solution used in \ref{fig:friction_verification} is a dynamic Coulomb model friction only. Note that the error increases as the timestep decreases. This is caused by the static friction being lower than the dynamic friction and so not slowing the particle down as much.
-If the static friction part of the model is removed then the results are those shown in \ref{fig:friction_verification_dynamic_only}. This very closely matches the analytic solution but is less stable.
-\begin{figure}[!htb]
-\centering
-\includegraphics[scale=0.5]{figures/friction_verification.png}
-\caption{Normalized position and speed against time during a friction event.}
-\label{fig:friction_verification}
-\end{figure}
-\begin{figure}[!htb]
-\centering
-\includegraphics[scale=0.5]{figures/friction_verification_dynamic_only.png}
-\caption{Normalized position and speed against time during a friction event with only dynamic friction enabled.}
-\label{fig:friction_verification_dynamic_only}
-\end{figure}
 \subsection{Drag}
 \begin{figure}[!htb]
 \centering
-\includegraphics[scale=0.5]{figures/drag_verification.png}
+\includegraphics[scale=0.5]{figures/opencl_verification/drag_verification.png}
 \caption{Normalized position and speed against time of a particle in a moving fluid.}
-\label{fig:drag_verification}
+\label{fig:opencl_drag_verification}
+\end{figure}
+\subsection{Normal Collision}
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.5]{figures/opencl_verification/normal_force_verification.png}
+\caption{Normalized position and speed against time during a normal collision.}
+\label{fig:opencl_normal_force_verification}
+\end{figure}
+\subsection{Friction Sliding}
+The analytic solution used in \ref{fig:opencl_friction_verification} is a dynamic Coulomb model friction only. Note that the error increases as the timestep decreases. This is caused by the static friction being lower than the dynamic friction and so not slowing the particle down as much.
+If the static friction part of the model is removed then the results are those shown in \ref{fig:opencl_friction_verification_dynamic_only}. This very closely matches the analytic solution but is less stable.
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.5]{figures/opencl_verification/friction_verification.png}
+\caption{Normalized position and speed against time during a friction event.}
+\label{fig:opencl_friction_verification}
+\end{figure}
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.5]{figures/opencl_verification/friction_verification_dynamic_only.png}
+\caption{Normalized position and speed against time during a friction event with only dynamic friction enabled.}
+\label{fig:opencl_friction_verification_dynamic_only}
+\end{figure}
+\subsection{Normal Collision with Cohesion}
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.5]{figures/opencl_verification/cohesion_verification.png}
+\caption{Normalized position and speed against time during a normal collision with cohesion.}
+\label{fig:opencl_cohesion_verification}
 \end{figure}
 \section{Optimization and Performance}
 \textit{This will just contain brief details of optimizations made and analysis of the simulation performance.}
+\subsection{Performance}
+Govender et al. have also developed GPU based DEM implementations and have provided performance measures in one of their papers\cite{performance}. The key performance measure they use is the Cundall Number. The Cundall Number is defined in Equation \ref{eq:cundall number} where $N$ is the number of particles and $FPS$ is the number of simulation frames that can be calculated in a second. The simulations performed in Govender et al.\cite{performance} were run on an NVIDIA Quadro K6000 GPU with an Intel i7 3.5 GHZ Extreme Edition CPU. The benchmarks for this project have been run on an NVIDIA Quadro P5000 GPU with an  Intel Xeon 3.5 GHz CPU. The Quadro P5000 has significantly better performance than the Quadro K6000, this difference, as well as the difference in complexity for the different implementations, should be considered.
+\\To calculate the C Number of this project a 10 million particle simulation has been run with a timestep of 0.0005 seconds and a simulation length of 5 seconds. This simulation ran in 145.22 minutes yielding an $FPS$ of 1.148. This gives an overall C Number of $11.5 \times 10^6$.
+\\The table in Figure \ref{fig:performance comparison} compares this project with Govender et al.\cite{performance}. It shows that Govender et al. have achieved significantly better performance. In addition, Govender et al. have improved their performance in a later paper\cite{blazedem}.
+\\Although greater performance has been achieved in other codes, this project has achieved performance comparable to them. With further optimization and improved algorithms it is conceivable that this project could achieve similar performance.
+\begin{equation}
+C = N \times FPS
+\label{eq:cundall number}
+\end{equation}
+
+\begin{figure}
+\begin{center}
+\begin{tabular}{|c c c c|}
+\hline
+Author & Shape & N Particles & C Number\\
+\hline
+This project & Sphere & $10 \times 10^6$ & $11.5 \times 10^6$ \\
+Govender et al.\cite{performance} & Sphere & $50 \times 10^6$ & $55 \times 10^6$ \\
+BLAZE-DEM\cite{blazedem} & Sphere & $32 \times 10^6$ & $100 \times 10^6$ \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Performance comparison with another GPU DEM code.}
+\label{fig:performance comparison}
+\end{figure}
+\subsection{Run time linearity}
+One key objective of particle simulations with collisions is to reduce the simulation run time to $O(N)$ from $O(N^2)$. To assess this performance, simulations with increasing numbers of particles have been run. Notably, these simulations have logging to file disabled to reduce the unrelated complexities of the simulation run time. Figure \ref{fig:opencl_performance} shows the results of these runs. The results show that the simulation is very close to being linear. At high numbers of particles the non-linearity is more evident, but still remains very close to the extrapolated line.
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.7]{figures/opencl_performance.png}
+\caption{Run time against number of particles for the OpenCL simulation compared to a linear extrapolation through $N=1e4$ and $N=1e6$.}
+\label{fig:opencl_performance}
+\end{figure}
 \chapter{Application}
 \label{ch:Application}
 \textit{General overview of agglomerates and why different properties are interesting.}
@@ -581,7 +662,9 @@ Two important definitions are those of body overlap ($\delta_b$) and effect over
 &\dot{x}(0) = u_0 = \sqrt{\dfrac{k_c}{m}} A_1 - \sqrt{\dfrac{k_c}{m}} A_2 \\
 &A_1 = \dfrac{u_0}{2} \sqrt{\dfrac{m}{k_c}} \\\\
 &x = \dfrac{u_0}{2} \sqrt{\dfrac{m}{k_c}} e^{t \sqrt{k_c / m}} - \dfrac{u_0}{2} \sqrt{\dfrac{m}{k_c}} e^{- t \sqrt{k_c / m}} + d_e \\
-&\dot{x} = \dfrac{u_0}{2} e^{t \sqrt{k_c / m}} + \dfrac{u_0}{2} e^{- t \sqrt{k_c / m}} 
+&x = u_0 \sqrt{\dfrac{m}{k_c}} sinh\Big(t\sqrt{\dfrac{k_c}{m}}\Big) + d_e \\\\
+&\dot{x} = \dfrac{u_0}{2} e^{t \sqrt{k_c / m}} + \dfrac{u_0}{2} e^{- t \sqrt{k_c / m}} \\
+&\dot{x} = u_0 cosh\Big(t\sqrt{\dfrac{k_c}{m}}\Big)
 \end{align*}
 Two important results from this solution are the impact time ($t_i$) and impact velocity ($u_i$).
 \subsubsection{Impact Time ($t_i$)}
@@ -622,7 +705,7 @@ Two important results from this solution are the impact time ($t_i$) and impact 
 &\dot{x}(0) = aA_2 + bA_1 = u_i \\
 &A_1 = \dfrac{u_i - aA_2}{b} = \dfrac{u_i - ac}{b} \\\\
 &x = e^{at} (\dfrac{u_i - ac}{b} sin(bt) + c cos (bt)) + \dfrac{k_e d_b - k_c d_e}{k_e - k_c} \\
-&\dot{x} = e^{at}\Big(\Big(\dfrac{u_i - ac}{b} a - \dfrac{k_c (d_e - d_b)}{k_e - k_c} b\Big)sin(bt) + \Big(\dfrac{u_i - ac}{b} b + \dfrac{k_c (d_e - d_b)}{k_e - k_c} a\Big) cos(bt)\Big) \\\\
+&\dot{x} = e^{at}\Big(\Big(\dfrac{u_i - ac}{b} a - c b\Big)sin(bt) + u_i cos(bt)\Big) \\\\
 \end{align*}
 The position cannot be analytically solved for $t$ in order to find the initial return velocity. A reasonable estimation for this is to use $t_{col} = \dfrac{\pi}{b}$, and other results, from section \ref{der:normal collision}. Thus the initial return velocity, $u_r$, can be found to be $u_r = - \epsilon u_i$.
 \subsection{Cohesion Only, Returning ($d_e > x > d_b, u > 0$)}
@@ -638,9 +721,8 @@ The General Solution to the returning equation is the same as the incoming equat
 &A_1 = \dfrac{1}{2}\Big(d_b - d_e + u_r \sqrt{\dfrac{m}{k_c}} \Big) \\
 &A_2 = \dfrac{1}{2}\Big(d_b - d_e - u_r \sqrt{\dfrac{m}{k_c}} \Big) \\
 &A_1 = \dfrac{u_0}{2} \sqrt{\dfrac{m}{k_c}} \\\\
-&x = \dfrac{1}{2}(d_b - d_e)(e^{t \sqrt{k_c / m}} + e^{- t \sqrt{k_c / m}}) + \dfrac{1}{2}u_r\sqrt{\dfrac{m}{k_c}}(e^{t \sqrt{k_c / m}} - e^{-t \sqrt{k_c / m}}) + d_e \\
 &x = (d_b - d_e)cosh\Big(\sqrt{\dfrac{k_c}{m}} t\Big) + u_r \sqrt{\dfrac{m}{k_c}} sinh\Big(\sqrt{\dfrac{k_c}{m}}t\Big) + d_e \\
-&\dot{x} = \sqrt{\dfrac{k_c}{m}}(d_b - d_e)sinh\Big(\sqrt{\dfrac{k_c}{m}} t\Big) + u_r cosh\Big(\sqrt{\dfrac{k_c}{m}}t\Big) + d_e \\
+&\dot{x} = \sqrt{\dfrac{k_c}{m}}(d_b - d_e)sinh\Big(\sqrt{\dfrac{k_c}{m}} t\Big) + u_r cosh\Big(\sqrt{\dfrac{k_c}{m}}t\Big) \\
 \end{align*}
 \section{Stickyness Number}
 Taking the results from section \ref{der:normal collision with cohesion} it is known that if the particle is to escape the collision the position, $x$, will at some point return to $d_e$. Thus:
