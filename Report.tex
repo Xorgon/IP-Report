@@ -76,32 +76,22 @@
 \chapter{Introduction}
 \section{Project Overview}
 \textit{What the project is about, why it is significant etc.}
-\section{Project Goals}
-Thus the aim of this project is to implement the DEM for large numbers of particles on OpenCL. This will allow for an assessment of OpenCL performance with large numbers of particle that has not yet been tested.
-\\\textit{$<$ Currently just a copy-paste from interim report, this will be expanded on and more clearly defined later on. $>$}
+\section{Aims and Objectives}
+The aim of this project is to observe how agglomerates form with varying simulation properties using a particle simulation developed with OpenCL. This can be separated into three main objectives:
+\begin{enumerate}
+\item Develop a simple particle simulation in order to understand the methodologies required for the project.
+\item Develop a particle simulation that can simulate large numbers of particles ($10^7$) using OpenCL for GPUs.
+\item Simulate particles in a fluid with collisions and observe how agglomerates form, including statistical analysis of agglomerate properties, as different simulation properties are varied.
+\end{enumerate}
 \section{Report Structure}
 This report has three main parts. Firstly, the model being used and its numerical implementation are discussed. Chapter \ref{ch:The Discrete Element Method} provides detail on the mathematical model and the analytic equations of motion for the model. Chapter \ref{ch:Numerical Methods} shows how the mathematical model is implemented numerically and has some comparisons of method accuracy.
 \\The second part explains how the model is implemented programmatically. Chapter \ref{ch:Python Implementation} discusses the initial implementation of the algorithm in Python. Chapter \ref{ch:OpenCL Implementation} contains a background in Graphics Processing Units and how OpenCL functions. It also discusses the details of the final OpenCL implementation. Both of these chapters contain relevant simulation verification test cases.
 \\The final part is the application of the simulation to the study of how agglomerates form with varying particle properties and initial conditions. This demonstrates the capabilities of the simulation and provides some useful insights.
 \section{Previous Work}
-The project directly preceding this one was 'Programming GPU Cards with OpenCL to Predict the Motion of Billions of Particles'\cite{achow} by Andrew Chow. His project developed a parallelised particle-fluid simulator using OpenCL. Particle-particle interactions were not considered in his project. This project will expand upon his by implementing particle-particle interactions using the Discrete Element Method.
+The project directly preceding this one was 'Programming GPU Cards with OpenCL to Predict the Motion of Billions of Particles'\cite{achow} by Andrew Chow. His project developed a parallelised particle-fluid simulator using OpenCL. Particle-particle interactions were not considered in his project. This project will expand upon his by implementing particle-particle interactions using the Discrete Element Method (explained in Chapter \ref{ch:The Discrete Element Method}).
 \\The DEM has been implemented many times since it was originally devised by Cundall in 1971\cite{cundallphd}. Improvements in the algorithm have been proposed and implemented, and it has proven to be a reliable technique.
 \\Many implementations have been CPU based with no parallelisation, but in recent years implementations have tended to be parallelised. The vast majority of parallel DEM implementations\cite{blazedem}\cite{GAN20161172}\cite{demcuda1}\cite{demcuda2}\cite{demcuda3} have used NVIDIA's CUDA platform which is restricted to running on NVIDIA GPUs. This means that these implementations are not usable on other hardware. One solution to this problem is to use the Open Computing Language (OpenCL). OpenCL code can be executed across heterogeneous platforms. This includes CPUs, GPUs and other, more novel, processing units. This means that an implementation programmed in OpenCL can be accessible to most users. One paper described an implementation that did use OpenCL but the application was for a real-time interactive simulation and so relatively low numbers of particles were used (16,000 was the maximum benchmarked)\cite{kinect}. Another paper briefly describes an adaptation of a simple existing implementation and its performance, however testing, decision, and implementation details are not extensive and testing was only done with $2^{17}$ (131,072) particles\cite{washizawa}.
 \\This project draws from the work of Rob Tuley whose PhD thesis\cite{tuley} outlined some of the key aspects of the DEM as well as its application in powder simulations.
-\\\textit{$<$ A lot of this was from interim report. I'm concerned that it may be too much detail on previous DEM implementations before DEM is explained properly. $>$}
-\section{Single Particle Motion in Fluids}
-\label{sec:Single Particle Motion in Fluids}
-\textit{This is just a summary of what Andrew Chow did, should I just include a sentence about what he did in the Previous Work section? I think this is useful because a lot of the non-DEM stuff was based heavily on what he did so a decent understanding of what he did lends to the background of what I'm doing.\\}
-The focus of the previous project was simulating how a particle moves in a fluid. The governing equations from that project form the basis of this project. The governing equation of motion was equation \ref{eq:single particle motion} where $\mathbf{u}$ is the particle velocity, $\mathbf{u}_f$ is the fluid velocity at the particle location, $\tau_p$ is the particle relaxation time, and $\mathbf{g}$ is the gravitational acceleration.
-\begin{equation}
-\label{eq:single particle motion}
-\dfrac{d\mathbf{u}}{dt} = \dfrac{1}{\tau_p}(\mathbf{u} - \mathbf{u}_f) + \mathbf{g}
-\end{equation}
-The particle relaxation time, $\tau_p$ is an approximate timescale describing how the particle's velocity changes in a fluid due to drag. Assuming Stoke's Law drag on a spherical particle, $\tau_p$ can be defined by equation \ref{eq:particle relaxation time} where $\rho_p$ is the particle density, $d_p$ is the particle diameter, and $\mu$ is the dynamic viscosity of the fluid.
-\begin{equation}
-\label{eq:particle relaxation time}
-\tau_{p} = \dfrac{\rho_{p} d^{2}_{p}}{18 \mu}
-\end{equation}
 \chapter{The Discrete Element Method}
 \label{ch:The Discrete Element Method}
 \textit{$<$ I'm considering adding an overall algorithm flowchart somewhere in this chapter. $>$}
@@ -162,12 +152,17 @@ The motion of particles in the simulation is governed by equation \ref{eq:accele
 \end{equation}
 \subsection{Drag and Gravitational Forces}
 \label{sec:drag and gravity}
-The drag force is the same as that used in the previous project. Equation \ref{eq:drag force} defines the drag force from the acceleration used in equation \ref{eq:single particle motion}.
+Assuming low Reynolds numbers, Stokes flow relationships can be used. This includes Stokes drag, defined in Equation \ref{eq:drag force}, where $m$ is particle mass, $\tau_p$ is particle relaxation time, $\mathbf{u}_f$ is fluid velocity, and $\mathbf{u}$ is particle velocity.
 \begin{equation}
 \label{eq:drag force}
 \mathbf{F}_{d} = \dfrac{m}{\tau_p} (\mathbf{u}_f - \mathbf{u})
 \end{equation}
-The gravity force is also the same as that used in the previous project and is defined in equation \ref{eq:gravitational force}.
+The particle relaxation time, $\tau_p$ is an approximate timescale describing how the particle's velocity changes in a fluid due to drag. Assuming Stokes Law drag on a spherical particle, $\tau_p$ can be defined by equation \ref{eq:particle relaxation time} where $\rho_p$ is the particle density, $d_p$ is the particle diameter, and $\mu$ is the dynamic viscosity of the fluid.
+\begin{equation}
+\label{eq:particle relaxation time}
+\tau_{p} = \dfrac{\rho_{p} d^{2}_{p}}{18 \mu}
+\end{equation}
+The gravity force is simple and defined in equation \ref{eq:gravitational force}.
 \begin{equation}
 \label{eq:gravitational force}
 \mathbf{F}_{g} = m \mathbf{g}
@@ -203,6 +198,7 @@ The coefficient of restitution is ratio of speed before and after a collision. F
 \section{Rotation/Quaternions}
 \textit{$<$This will be completed later as it is not immediately relevant to the progress of the project.$>$}
 \section{Collision Detection}
+\label{sec:collision detection}
 A key part of the DEM is effective collision detection. If approached naively collision detection is simply calculating the overlap for every particle with every other particle. This is extremely inefficient and causes the simulation to run in $O(N^2)$ time, where $N$ is the number of particles. To improve efficiency this process can be split into two phases. Firstly, the broad phase determines which particles could collide with which other particles. This reduces the number of particle collisions that have to be calculated. The second phase, collision resolution, resolves the collisions by measuring overlap. The goal of the broad phase is to allow the simulation to run in $O(N)$ time.
 \\There are many different algorithms that can be used for broad phase collision detection, varying in complexity and efficiency. Although some of the more complex algorithms were considered, the gain in efficiency was not significant enough to outweigh the significant increase in implementation complexity. For this reason the simplest algorithm, spatial zoning, has been chosen for this project.
 \\Spatial zoning separates the simulation domain into control volumes. Particles are then sorted into the control volumes. Particles in neighbouring, or the same, control volumes are then resolved fully. It is most efficient to have the control volumes as small as possible because this reduces the number of particles in neighbouring control volumes. Control volumes must be at least as large as the largest particle in the simulation to ensure that neighbouring control volumes contain all possible collisions. For monodisperse particle populations this means that the control volumes should be the same size as the particles. For polydisperse particle populations this means that the control volumes should be the size of the largest particle in the population. As mentioned in Tuley\cite{tuley} this can decrease efficiency for statistical distributions of particle sizes. Sections \ref{sec:Python Collision Detection} and \ref{sec:OpenCL Collision Detection} provide further detail as to how this is implemented computationally in Python and with OpenCL, respectively.
@@ -273,9 +269,6 @@ This analysis was performed using the Python implementation discussed in Chapter
 \caption{Average percentage difference between the numerical method and analytical solution against varying timestep. The jaggedness of the lines is due to the discrete changes in timestep causing small rounding errors.}
 \label{fig:avg_percent_diff_against_timestep}
 \end{figure}
-
-\section{Selected Iterative Functions}
-\textit{This section will provide a summary of all of the iterative functions used. This may not be necessary because these will be defined in previous sections. The only reason this section might exist is if a summary is useful to clarify it all.}
 \section{Verification}
 \label{sec:verification}
 \subsection{Drag}
@@ -336,21 +329,21 @@ The cohesion collision verification case is very similar to the normal collision
 \\- Verification (Verification of the simulation implementation)}
 \label{ch:Python Implementation}
 \section{Overview}
-An initial implementation of the Discrete Element Method has been done in Python. The objective of this implementation is to gain an understanding of the DEM and any inherent computational difficulties. Python has been chosen as a testing environment for its simplicity and ease of development. 
+An initial implementation of the Discrete Element Method has been done in Python. The objective of this implementation is to gain an understanding of the DEM and any inherent computational difficulties. Python has been chosen as a testing environment for its simplicity and ease of development. The code for the Python implementation can be found in the DEMApples GitHub repository\cite{DEMApples}.
 \section{Program Structure}
 \subsection{Element Types}
-Different element types are required for different types of geometry and particle. For the Python implementation the two simplest have been chosen, a spherical particle and an axis-aligned wall.
+Different element types are required for different types of geometry and particle. For the Python implementation the two simplest have been chosen, a spherical particle and an axis-aligned wall. Python allows for object oriented programming which makes keeping track of everything very easy. Objects have been used extensively throughout the Python implementation.
 \subsubsection{Particle}
-The basic particle element is a spherical particle with pre-determined properties. These properties include initial position, initial velocity, diameter, density, fluid viscosity, and functions for fluid velocity and gravity. All of these properties can be set upon instantiation of each particle object and so can be easily modified for a variety of different simulations.
+The basic particle element is a spherical particle with pre-determined properties. All of these properties can be set upon instantiation of each particle object and so can be easily modified for a variety of different simulations.
 \\There are two objects for particles, the main object, 'Particle', tracks a full particle state history which is very memory intensive and unnecessary for most applications. The second object, 'LowMemParticle', inherits from 'Particle' and only keeps track of the current state and, during iteration, one future state.
-\\The particle is iterated using the function call 'Particle.iterate()'. This passes a $\Delta t$ to the particle object and iterates the velocity and position. The methods used for integrating these properties are discussed in section \ref{sec:Numerical Integration}.
+\\The particle is iterated using the function call 'Particle.iterate()'. This passes a $\Delta t$ to the particle object and iterates the velocity and position. The iterative functions used are discussed in Chapter \ref{ch:Numerical Methods}.
 \subsubsection{Axis-Aligned Simple Wall}
-The basic wall element is an axis-aligned simple wall. This object is defined by two points, minimum and maximum, that must lie in the same plane. From them a rectangle is formed. A normal is calculated for the wall and stored in the object to save time in collision calculations. The wall is treated as fixed, eliminating the need for complex material properties or calculation of motion.
+The basic wall element is an axis-aligned simple wall. This object is defined by two points, minimum and maximum, that must lie in the same plane. From them a rectangle is formed. A normal is calculated for the wall and stored in the object to save time in collision calculations. The wall is treated as fixed, eliminating the need for complex material properties or calculation of motion. An axis-aligned wall has been chosen because it eliminates a lot of the complex calculations required when calculating arbitrary planar geometry. Non-axis-aligned geometry, such as a slope, can still be used in simulations by having gravity act along different vectors. This has been used in `gravity\_shift\_closed\_box.py' simulation.
 \subsection{Collisions}
 \subsubsection{Collision Detection}
 \label{sec:Python Collision Detection}
-Broad phase collision detection uses the simple spatial zoning technique described in Tuley\cite{tuley}. This approach has been chosen because it is quick and simple to implement. Other options were considered for this implementation but the benefits of using them were far outweighed by the complexity that using them would add to the overall algorithm. Since the initial Python implementation will not be fast anyway it was not deemed necessary to implement optimised algorithms at this stage.
-\\The domain is represented by a three dimensional array where each entry is a control volume. The control volume is a list of particles in its bounds. The list of particles is iterated over and each particle assigns itself to the correct control volume. This results in a three dimensional array where each control volume has all of the particles within its bounds as an array. Collision objects are then created for each pair of particles in the same, or neighbouring, control volumes. This approach reduces the problem from $O(N^{2})$ to almost $O(N)$ as shown in figure \ref{fig:run_time_against_N_python}.
+Broad phase collision detection uses the simple spatial zoning technique from section \ref{sec:collision detection}. This approach has been chosen because it is quick and simple to implement. Other options (such as triangulation\cite{dynamictriangulations}) were considered for this implementation but the benefits of using them were far outweighed by their complexity. Since the initial Python implementation will not be fast anyway it was not deemed necessary to implement optimised algorithms at this stage.
+\\The domain is represented by a three dimensional array where each entry is a control volume. The control volume is a list of particles in its bounds. The global list of particles is iterated over and each particle assigns itself to the correct control volume. This results in a three dimensional array where each control volume has all of the particles within its bounds as an array. Collision objects are then created for each pair of particles in the same, or neighbouring, control volumes. This approach reduces the problem from $O(N^{2})$ to almost $O(N)$ as shown in figure \ref{fig:run_time_against_N_python}.
 \begin{figure}[!ht]
 \centering
 \includegraphics[scale=0.75]{figures/RunTimeAgainstNumberOfParticlesPython.png}
@@ -359,16 +352,15 @@ Broad phase collision detection uses the simple spatial zoning technique describ
 \end{figure}
 \subsubsection{Collision Resolution}
 After an array of collisions has been generated they are iterated over and each collision is resolved. First, the distance between particles is calculated to determine if they are in contact. Often this reveals that they are not in contact and the calculation ends there. If particles are in contact then collision forces are determined.
-\\In this initial Python implementation only the simple normal and tangential contact forces are calculated. These are enough to run sufficient initial test cases.
+\\In the Python implementation only the simple normal and tangential contact forces are calculated. These are enough to run sufficient initial test cases.
 \subsection{Calculating Forces}
-There are three categories of forces used in this implementation. These are drag (particle-fluid interaction), gravity, and DEM forces.
+The mathematics for how the forces are calculated can be found in Section \ref{ch:Numerical Methods}. This section discusses some of the implementation details.
 \subsubsection{Drag}
-The drag forces are determined using Stokes' law as discussed in %TODO Reference
-This is calculated using a flow field calculation function that is passed into the Particle object upon instantiation. The particle then calls this function as part of its get\_accel() function. This allows a variety of flow field functions to be used without modifying the Particle object code. The default for this function is a perfectly stationary flow.
+To determine drag a flow velocity must be calculated. In this implementation it is calculated using a function that is passed into the Particle object upon instantiation. This allows a variety of flow field functions to be used without modifying the Particle object code. The default for this function is a perfectly stationary flow.
 \subsubsection{Gravity}
-Gravity is treated in a similar manner to drag. A gravity function can be passed into the Particle object upon instantiation. Although this defaults to a simple -9.81$ms^{-2}$, it can be chosen to simulate a rotating frame of reference or other complex configurations. A rotating frame of reference has been implemented in the ``gravity\_shift\_closed\_box'' example simulation. %TODO Reference github
+A gravity function can also be passed into the Particle object upon instantiation. Although this defaults to a simple -9.81$ms^{-2}$ in the negative z direction, it can be chosen to simulate a rotating frame of reference or other complex configurations. A rotating frame of reference has been implemented in the `gravity\_shift\_closed\_box' example simulation\cite{DEMApples}.
 \subsubsection{DEM Forces}
-The DEM forces that are calculated in collisions are stored in an array within the Particle object. When the particle is iterated the array is added together and used in the integration calculation. After this calculation the array is cleared so that forces don't get incorrectly added multiple times. This configuration makes it simple to add and remove forces to the simulation whenever necessary and could also be used in general to add any force to the particle.
+The DEM forces that are calculated in collisions are stored in an array within the Particle object. When the particle is iterated the array is summed and used in the iteration calculation. After this calculation the array is cleared so that forces don't get incorrectly added multiple times. This configuration makes it simple to add and remove forces to the simulation whenever necessary and could also be used in general to add any force to the particle.
 \section{Optimization and Performance}
 \section{Verification}
 \subsection{Drag}
@@ -401,15 +393,19 @@ The DEM forces that are calculated in collisions are stored in an array within t
 \section{Overview}
 \section{Program Structure}
 \subsection{Data Structures}
-As the C language does not support objects, the objects used in the Python implementation must be simplified into data structures and separate functions. Most of the calculations that were done in the object functions will now be done within the kernels.
+Unlike Python, C does not support objects. This means that more care must be taken in data storage. The most sensible way to store data is in structures. In this implementation structures are used as the primary storage method. There are three types of structures used: particle, wall, collision.
 \subsubsection{Particle}
-The particle structure contains very similar information as the Python implementation particle object. Notable differences are the lack of 'next\_$<$property$>$' variables since these are just used within the iterate\_particle kernel and do not need to be stored.
-\\The structure is aligned to the nearest 128 bytes of memory to make accessing it easier. This does waste a little under half of this memory but for $10^7$ particles the particle array requires a total of 1.2GB which is within workable limits.
+The particle structure contains particle properties (density, diameter, position, velocity etc.) as well as the fluid viscosity to make it easier to access in calculations.
+\\The structure is aligned to the nearest 128 bytes of memory to make access to it faster. This does waste a little under half of this memory but for $10^7$ particles the particle array requires a total of 1.2GB which is within workable limits. Benchmarks could be performed to determine whether this trade-off is necessary, but the downside is small and so has not been considered significant. Another benefit of this alignment is that additional particle data can be stored within the particle array without costing any more memory than is already used.
+\subsubsection{Wall}
+The `aa\_wall' structure simply contains the minimum, maximum, and normal vector for an axis aligned wall. This structure is not aligned to the nearest 128 bytes of memory.
 \subsubsection{Collision}
-The collision structure contains two particle IDs and collision properties. This could be reduced to just particle IDs if collisions were taken as having the same properties throughout the simulation. Alternatively, if the collision changed based on particle properties, the collision resolution kernel could calculate the collision properties when they are needed.
+There are two collision structures: `pp\_collision' for particle-particle collisions and `pw\_collision' for particle-wall collisions. The structures only contain the two relevant IDs. The collision structures are not aligned to the nearest 128 bytes of memory as this would waste almost all of the memory and there can be many collisions.
+\\The only notable difference between the particle-particle collision structure and the particle-wall collision structure is that the particle-particle collision structure contains data that tracks whether a collision is across a periodic boundary.
 \subsubsection{Buffers}
-To access the data from the device it must be passed into a buffer. None of the structure data is passed into the buffer so the device must have the same definition of the structure as the host. This is problematic as the host and device have different compilers. To work around this problem the host and device structures are written with members in descending order of size. In addition padding has been added to the host code %TODO Make sure this is the case
- since the alignment specifier is apparently insufficient to ensure correct alignment. The alignment attribute specifier is also not the same between different compilers so ``if defined'' statements are implemented for both Visual Studio and GCC compilers.
+To access the data from the device it must be passed into a buffer. None of the structure data is passed into the buffer so the device must have a copy of the definition of the structure. This is problematic as the host and device have different compilers. To work around this problem the host and device structures are written with members in descending order of size. This encourages the compiler to order them correctly.
+\\In addition, when using the MSVC compiler, padding must be added to ensure correct alignment. This padding is not required when using gcc compilers. 
+\\The alignment attribute specifier is also not the same between different compilers so ``if defined'' statements are implemented for both MSVC and gcc compilers to allow the code to be compiled on either without modification.
 \subsection{Kernels}
 The main calculations for this implementation are performed on the device. This means that the program must be separated into kernels to be passed over sets of data.
 \subsubsection{Collision Detection}
@@ -502,10 +498,10 @@ If the static friction part of the model is removed then the results are those s
 \section{Optimization and Performance}
 \textit{This will just contain brief details of optimizations made and analysis of the simulation performance.}
 \subsection{Performance}
-Govender et al. have also developed GPU based DEM implementations and have provided performance measures in one of their papers\cite{performance}. The key performance measure they use is the Cundall Number. The Cundall Number is defined in Equation \ref{eq:cundall number} where $N$ is the number of particles and $FPS$ is the number of simulation frames that can be calculated in a second. The simulations performed in Govender et al.\cite{performance} were run on an NVIDIA Quadro K6000 GPU with an Intel i7 3.5 GHZ Extreme Edition CPU. The benchmarks for this project have been run on an NVIDIA Quadro P5000 GPU with an  Intel Xeon 3.5 GHz CPU. The Quadro P5000 has significantly better performance than the Quadro K6000, this difference, as well as the difference in complexity for the different implementations, should be considered.
+Govender et al. have also developed GPU based DEM implementations and have provided performance measures in one of their papers\cite{performance}. The key performance measure they use is the Cundall Number. The Cundall Number is defined in Equation \ref{eq:cundall number} where $N$ is the number of particles and $FPS$ is the number of simulation frames that can be calculated in a second. The simulations performed in Govender et al.\cite{performance} were run on an NVIDIA Quadro K6000 GPU with an Intel i7 3.5 GHZ Extreme Edition CPU. The benchmarks for this project have been run on an NVIDIA Quadro P5000 GPU with an  Intel Xeon 3.5 GHz CPU.
 \\To calculate the C Number of this project a 10 million particle simulation has been run with a timestep of 0.0005 seconds and a simulation length of 5 seconds. This simulation ran in 145.22 minutes yielding an $FPS$ of 1.148. This gives an overall C Number of $11.5 \times 10^6$.
 \\The table in Figure \ref{fig:performance comparison} compares this project with Govender et al.\cite{performance}. It shows that Govender et al. have achieved significantly better performance. In addition, Govender et al. have improved their performance in a later paper\cite{blazedem}.
-\\Although greater performance has been achieved in other codes, this project has achieved performance comparable to them. With further optimization and improved algorithms it is conceivable that this project could achieve similar performance.
+\\Although greater performance has been achieved in other codes, this project has achieved satisfactory performance. With further optimization, and implementation of more complex algorithms, it is conceivable that similar performance could be achieved.
 \begin{equation}
 C = N \times FPS
 \label{eq:cundall number}
@@ -527,7 +523,7 @@ BLAZE-DEM\cite{blazedem} & Sphere & $32 \times 10^6$ & $100 \times 10^6$ \\
 \label{fig:performance comparison}
 \end{figure}
 \subsection{Run time linearity}
-One key objective of particle simulations with collisions is to reduce the simulation run time to $O(N)$ from $O(N^2)$. To assess this performance, simulations with increasing numbers of particles have been run. Notably, these simulations have logging to file disabled to reduce the unrelated complexities of the simulation run time. Figure \ref{fig:opencl_performance} shows the results of these runs. The results show that the simulation is very close to being linear. At high numbers of particles the non-linearity is more evident, but still remains very close to the extrapolated line.
+One key objective of particle simulations with collisions is to reduce the simulation run time from $O(N^2)$ to $O(N)$. To assess this performance, simulations with increasing numbers of particles have been run. Notably, these simulations have logging to file disabled assess the algorithm performance only. Figure \ref{fig:opencl_performance} shows the results of these runs. The results show that the simulation is very close to being linear. At high numbers of particles the non-linearity is more evident, but still remains close to the extrapolated line.
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.7]{figures/opencl_performance.png}
@@ -539,7 +535,32 @@ One key objective of particle simulations with collisions is to reduce the simul
 \textit{General overview of agglomerates and why different properties are interesting.}
 \section{Simulation Setup}
 \textit{Initial conditions, properties to be varied, how this is defined in the program.}
-\subsection{Stoke's Number}
+\subsection{Taylor-Green Vortex Flow}
+Taylor-Green Vortex flow is a specific solution to the incompressible Navier-Stokes equations. Chow\cite{achow} simplifies these equations for cubic vortices with a control variable $A$ and vortex frequency $a$ as shown in Equations \ref{eq:tgv_u}, \ref{eq:tgv_v}, and \ref{eq:tgv_w}. This formulation has vortex boundaries at $-\pi$ and $\pi$. The flow is plotted in Figure \ref{fig:tgv_plot}.
+\begin{align}
+u &= A cos\Big(a\Big(x + \dfrac{\pi}{2a}\Big)\Big)sin\Big(a\Big(y + \dfrac{\pi}{2a}\Big)\Big)sin\Big(a\Big(z + \dfrac{\pi}{2a}\Big)\Big) \label{eq:tgv_u}\\
+v &= A sin\Big(a\Big(x + \dfrac{\pi}{2a}\Big)\Big)cos\Big(a\Big(y + \dfrac{\pi}{2a}\Big)\Big)sin\Big(a\Big(z + \dfrac{\pi}{2a}\Big)\Big) \label{eq:tgv_v}\\
+w &= -2A sin\Big(a\Big(x + \dfrac{\pi}{2a}\Big)\Big)sin\Big(a\Big(y + \dfrac{\pi}{2a}\Big)\Big)cos\Big(a\Big(z + \dfrac{\pi}{2a}\Big)\Big) \label{eq:tgv_w}
+\end{align}
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.65]{figures/tgv_plot.png}
+\caption{A z-y view of a Taylor-Green Vorted flow field. (Figure 5a from Chow\cite{achow}).}
+\label{fig:tgv_plot}
+\end{figure}
+\subsection{Stokes Number}
+The Stokes Number, Stk, describes how a particle moves through a fluid. A high Stokes Number indicates an inertial regime where a particle is relatively unaffected by the fluid. A low Stokes Number indicates a viscous flow regime where the particle closely follows the fluid. A Stokes Number around 1 is in a transitional regime between viscous and inertial. This is shown in Figure \ref{fig:stokes_number}. The Stokes Number for a particle in Stokes flow is defined as in Equation \ref{eq:stokes_number}\cite{achow}.
+\\For the Taylor-Green Vortex flow used in these simulations, $l_0$ is the diameter of one of the vortices and $u_0$ is the average fluid flow speed $u_{f,avg}$. Chow\cite{achow} calculated that the average flow speed for Taylor-Green Vortex flow is $u_{f,avg} = 0.7839A$.
+\begin{equation}
+Stk = \dfrac{\rho_p d_p^2 u_0}{18 \mu l_0}
+\label{eq:stokes_number}
+\end{equation}
+\begin{figure}[!htb]
+\centering
+\input{figures/stokes_number.tex}
+\caption{Stoke's Number regimes.}
+\label{fig:stokes_number}
+\end{figure}
 \subsection{Stickyness Number}
 The Stickyness Number, Sy, describes how likely particles are to stick to each other through collisions. $L_e$ is the effect length and is usually $d_e - d_b$, where $d_e$ is the effect diameter and $d_b$ is the body diameter. $k_c$ is the cohesion stiffness from equation \ref{eq:cohesion force}. $\epsilon$ is the coefficient of restitution, $u$ is the average particle speed, and $m$ is the average particle mass.
 

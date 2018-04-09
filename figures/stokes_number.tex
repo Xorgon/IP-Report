@@ -1,0 +1,26 @@
+\usetikzlibrary{arrows}
+\begin{tikzpicture}
+\draw [dashed, -open triangle 60] plot[smooth, tension=.7] coordinates {(-4,-0.5) (-2,-1) (-1.5,-2.5) (-2,-3.5) (-3.5,-4)};
+\draw [-triangle 60] plot[smooth, tension=.7] coordinates {(-4,0.5) (-3.5, -0.25) (-1.75,-0.75) (-1.2,-2.5) (-1.75,-3.75) (-3.5,-4.35)};
+
+\draw [dashed, -open triangle 60] plot[smooth, tension=.7] coordinates {(2,-0.5) (4,-1) (4.5,-2.5) (4,-3.5) (2.5,-4)};
+\draw [-triangle 60] plot[smooth, tension=.7] coordinates {(2,0.5) (4,-1.75) (4,-4.5)};
+
+\draw [dashed, -open triangle 60] plot[smooth, tension=.7] coordinates {(8,-0.5) (10,-1) (10.5,-2.5) (10,-3.5) (8.5,-4)};
+\draw [-triangle 60] plot[smooth, tension=.7] coordinates {(8,0.5) (10,-4.5)};
+
+\node at (-3.5,-5) {Viscous, $Stks << 1$};
+\node at (2.5,-5) {Transitional, $Stks \approx 1$};
+\node at (8.5,-5) {Inertial, $Stks >> 1$};
+\node (v3) at (-4,-6) {};
+\node (v4) at (-1,-6) {};
+\node at (0.5,-6) {Fluid motion};
+\node (v5) at (3,-6) {};
+\node (v6) at (6,-6) {};
+\node at (7.5,-6) {Particle motion};
+\draw [dashed, -open triangle 60] (v3) edge (v4);
+\draw [-triangle 60] (v5) edge (v6);
+
+
+
+\end{tikzpicture}
