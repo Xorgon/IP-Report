@@ -176,13 +176,11 @@ The gravity force is simple and defined in equation \ref{eq:gravitational force}
 \subsection{Reduced Mass}
 When considering the motion of two particles relative to each other a useful property is the reduced mass. Consider the relative acceleration of two particles in a collision. To determine the relative acceleration between the two particles, the two accelerations must be combined. It is known that $F_1$ and $F_2$ are equal and opposite. Finding the relative acceleration results in equation \ref{eq:relative acceleration}. This provides a relationship between the force in a collision and the relative acceleration as a result of that collision. It is of a similar form as Newton's Second Law but with the usual mass replaced with the reduced mass of the two particles (equation \ref{eq:reduced mass}). This reduced mass can be used instead of particle mass in equation \ref{eq:acceleration} when considering relative motion of particles.
 \begin{align}
-F_1 &= m_1 a_1 \nonumber
-\\F_2 &= m_2 a_2 \nonumber
+F_1 &= m_1 a_1 \nonumber \text{, } F_2 = m_2 a_2 \nonumber
 \\F_1 &= -F_2 \nonumber
 \\a_{rel} &= a_2 - a_1 \nonumber
 \\&= \dfrac{F_2}{m_2} - \dfrac{F_1}{m_1} \nonumber
 \\&= \dfrac{F_2}{m_2} + \dfrac{F_2}{m_1} \nonumber
-\\&= F_2 \Big(\dfrac{1}{m_2} + \dfrac{1}{m_1}\Big) \nonumber
 \\&= F_2 \Big(\dfrac{m_1 + m_2}{m_1 m_2}\Big) \nonumber
 \\F_2 &= \Big(\dfrac{m_1 m_2}{m_1 + m_2}\Big) a_{rel} \label{eq:relative acceleration}
 \\m_{reduced} &= \dfrac{m_1 m_2}{m_1 + m_2} \label{eq:reduced mass}
@@ -209,10 +207,15 @@ The coefficient of restitution is ratio of speed before and after a collision. F
 For arbitrary polyhedral particles rotation can be important since the particles will collide at different angles and it can make a significant difference to the result. With spherical particles this is less important since the collision geometry is always the same. Spherical particles can rearrange easier if rotation is considered but reasonably accurate results can still be obtained without implementing rotation. The aim of this project is to analyse how agglomerates form with a change in simulation properties so having fully accurate results is not necessary as long as the changes in behaviour can be captured.
 \section{Collision Detection}
 \label{sec:collision detection}
-A key part of the DEM is effective collision detection. If approached naively collision detection is simply calculating the overlap for every particle with every other particle. This is extremely inefficient and causes the simulation to run in $O(N^2)$ time, where $N$ is the number of particles. To improve efficiency this process can be split into two phases. Firstly, the broad phase determines which particles could collide with which other particles. This reduces the number of particle collisions that have to be calculated. The second phase, collision resolution, resolves the collisions by measuring overlap. The goal of the broad phase is to allow the simulation to run in $O(N)$ time.
+A key part of the DEM is effective collision detection. If approached naively collision detection is simply calculating the overlap for every particle with every other particle. This is extremely inefficient and causes the simulation to run in $O(N^2)$ time, where $N$ is the number of particles. To improve efficiency this process can be split into two phases. Firstly, the broad phase determines which particles could collide with which other particles. This reduces the number of particle collisions that have to be calculated. The second phase, collision resolution, resolves the collisions by measuring overlap. The goal of the broad phase is to allow the simulation to run in $O(N)$ time. Figure \ref{fig:algorithm_flowchart} shows the basic simulation loop and the different simulation phases.
 \\\\There are many different algorithms that can be used for broad phase collision detection, varying in complexity and efficiency. Although some of the more complex algorithms were considered, the gain in efficiency was not significant enough to outweigh the significant increase in implementation complexity. For this reason the simplest algorithm, spatial zoning, has been chosen for this project.
-\\\\Spatial zoning separates the simulation domain into control volumes. Particles are then sorted into the control volumes. Particles in neighbouring, or the same, control volumes are then resolved fully. It is most efficient to have the control volumes as small as possible because this reduces the number of particles in neighbouring control volumes. Control volumes must be at least as large as the largest particle in the simulation to ensure that neighbouring control volumes contain all possible collisions. For monodisperse particle populations this means that the control volumes should be the same size as the particles. For polydisperse particle populations this means that the control volumes should be the size of the largest particle in the population. As mentioned in Tuley\cite{tuley} this can decrease efficiency for statistical distributions of particle sizes. Sections \ref{sec:Python Collision Detection} and \ref{sec:OpenCL Collision Detection} provide further detail as to how this is implemented computationally in Python and with OpenCL, respectively.
-\\\\$<$\textit{Algorithm flowchart will go here.}$>$
+\\\\Spatial zoning separates the simulation domain into control volumes. Particles are then sorted into the control volumes. Particles in neighbouring, or the same, control volumes are then resolved fully. It is most efficient to have the control volumes as small as possible because this reduces the number of particles in neighbouring control volumes. Control volumes must be at least as large as the largest particle in the simulation to ensure that neighbouring control volumes contain all possible collisions. For monodisperse particle populations this means that the control volumes should be the same size as the particles. For polydisperse particle populations this means that the control volumes should be the size of the largest particle in the population. As mentioned in Tuley\cite{tuley} this can decrease efficiency for particle populations with a large range of sizes. Sections \ref{sec:Python Collision Detection} and \ref{sec:OpenCL Collision Detection} provide further detail as to how this is implemented computationally in Python and with OpenCL, respectively.
+\begin{figure}
+\centering
+\input{figures/algorithm.tex}
+\caption{The basic simulation loop and simulation phases.}
+\label{fig:algorithm_flowchart}
+\end{figure}
 \chapter{Numerical Methods}
 \label{ch:Numerical Methods}
 \section{Numerical Integration Schemes}
