@@ -13,6 +13,7 @@
 \usepackage{csvsimple}
 \usetikzlibrary{arrows}
 \usepackage[intoc, english]{nomencl}
+\usepackage{hyperref}
 \makenomenclature
 \author{Elijah Andrews}
 \title{Implementing the Discrete Element Method with OpenCL for GPUs}
@@ -75,7 +76,12 @@
 \printnomenclature
 \chapter{Introduction}
 \section{Project Overview}
-\textit{What the project is about, why it is significant etc.}
+Simulation is an important tool in modern day engineering. It allows engineers to test designs and predict
+behaviours without requiring expensive experimental testing. Simulation is in widespread use in many key
+areas of engineering, such as fluid dynamics and structural design.
+\\\\Simulations can often be time consuming and require hours or days to complete in order to achieve acceptable accuracy. It is common to construct super-computers in order to achieve better performance, and so less time to run a simulation. However, this is often not economical or widely available. One way to improve performance without simply adding more computational power is to use Graphics Processing Units (GPUs). Unlike CPUs, GPUs run computations in parallel which can make simulations a lot faster if the same calculations are run many times.
+\\\\Methods used to simulate systems vary and there are many programs that offer different tools for different jobs. The method used in this project is the Discrete Element Method, a way of simulating the motion and interactions of particles.
+\\\\This project implements the Discrete Element Method using GPUs in order to analyse particle agglomeration.
 \section{Aims and Objectives}
 The aim of this project is to observe how agglomerates form with varying simulation properties using a particle simulation developed with OpenCL. This can be separated into three main objectives:
 \begin{enumerate}
@@ -98,6 +104,7 @@ The Discrete Element Method (DEM) is a numerical method for simulating how parti
 \\\\There are two main categories of particle simulation: soft models and hard models. Soft models allow for overlap and treat collisions as sustained events whereas hard models treat collisions as an instantaneous event and model forces as an impulse. Soft collision models have broader applicability as they model sustained contact and multiple simultaneous collisions as well as some other complex phenomena\cite{softvshard}. For this reason a soft contact model is used in this project.
 \section{Particle Definition}
 The DEM can be used with arbitrary polyhedra, however for simplicity this project will only consider spherical particles as defined in figure \ref{fig:particle} where $O_p$ is the particle origin, $s_b$ is the body surface, and $s_e$ is the effect surface. The diameters of the particle body surface and particle effect surface are denoted by $d_b$ and $d_e$, respectively.
+\\\\The body surface is the surface of the particle considered to be the physical boundary, if two particles' body surfaces are touching or overlapping they are considered to be in contact. The effect surface is the surface of a particle within which cohesion effects are considered. If two particles' effect surfaces are touching or overlapping they are considered to be interacting.
 \begin{figure}[!ht]
 \centering
 \input{figures/particle.tex}
@@ -108,7 +115,7 @@ The DEM can be used with arbitrary polyhedra, however for simplicity this projec
 \label{sec:DEM Forces}
 The Discrete Element Method can simulate a number of different forces using a variety of models. The merits of some of the most common models are discussed in Tuley\cite{tuley}. For this project the simplest force models have been chosen to reduce the overall complexity of the simulation.
 \subsection{Normal Contact Force}
-In a real elastic collision there will be some deformation of the particles. Calculating the deformation itself would be computationally expensive and would not be of interest in the study of particle population behaviours. The interaction can be modelled as a linear spring-dashpot arrangement where the overlap between the two particles is the compression of the spring. The damping is based on the relative velocity in the normal direction. The force is thus described by equation \ref{eq:normal contact force} where $k_{e}$ is the collision stiffness, $\delta$ is the particle overlap, $\mathbf{\hat{n}}$ is the unit vector normal to the collision, $\eta$ is the damping coefficient, and $\mathbf{u}_{n}$ is the normal velocity.%TODO Make this clearer.
+In a real elastic collision there will be some deformation of the particles. Calculating the deformation itself would be computationally expensive and would not be of interest in the study of particle population behaviours. The interaction can be modelled as a linear spring-dashpot arrangement where the overlap between the two particles is the compression of the spring. The damping is based on the relative velocity in the normal direction. The force is thus described by Equation \ref{eq:normal contact force} where $k_{e}$ is the collision stiffness, $\delta$ is the particle overlap, $\mathbf{\hat{n}}$ is the unit vector normal to the collision, $\eta$ is the damping coefficient, and $\mathbf{u}_{n}$ is the normal velocity.%TODO Make this clearer.
 \begin{equation}
 \mathbf{F}_{n} = k_{e} \delta \mathbf{\hat{n}} - \eta \mathbf{u}_{n}
 \label{eq:normal contact force}
@@ -125,24 +132,24 @@ The tangential contact force is the friction between two particle surfaces. Ther
 \mathbf{F}_{t}^{static} = - k_{f} \zeta \mathbf{\hat{t}} - \eta \mathbf{u}_t
 \label{eq:static friction with damping}
 \end{equation}
-\\The dynamic regime friction force is calculated with equation \ref{eq:dynamic friction} where $\mu$ is the coefficient of friction.
+\\The dynamic regime friction force is calculated with Equation \ref{eq:dynamic friction} where $\mu$ is the coefficient of friction.
 \begin{equation}
 \mathbf{F}_{t}^{dynamic} = - \mu |\mathbf{F}_{n}| \mathbf{\hat{t}}
 \label{eq:dynamic friction}
 \end{equation}
-\\The final tangential friction force is defined in equation \ref{eq:friction force}.
+\\The final tangential friction force is defined in Equation \ref{eq:friction force}.
 \begin{equation}
 \mathbf{F}_{t} = -\mathbf{\hat{t}}min(|\mathbf{F}_{t}^{static}|, |\mathbf{F}_{t}^{dynamic}|)
 \label{eq:friction force}
 \end{equation}
 \subsection{Cohesion Force}
-Cohesion is the attractive force between two bodies of the same material, adhesion is the attractive force between two bodies of different materials. For this project all of the particles and walls are assumed to be of the same material and so only cohesion is considered, however adhesion could be modelled using varying cohesion stiffnesses. Although there are many complex effects that could be considered\cite{tuley}, a basic linear approximation can be used to model a cohesion force. This is defined in equation \ref{eq:cohesion force} where $k_c$ is the cohesion stiffness and $\delta_e$ is the particle effect surface overlap.
+Cohesion is the attractive force between two bodies of the same material, adhesion is the attractive force between two bodies of different materials. For this project all of the particles and walls are assumed to be of the same material and so only cohesion is considered, however adhesion could be modelled using varying cohesion stiffnesses. Although there are many complex effects that could be considered\cite{tuley}, a basic linear approximation can be used to model a cohesion force. This is defined in Equation \ref{eq:cohesion force} where $k_c$ is the cohesion stiffness and $\delta_e$ is the particle effect surface overlap.
 \begin{equation}
 \mathbf{F}_{c} = k_{c} \delta_{e} \mathbf{\hat{n}}
 \label{eq:cohesion force}
 \end{equation}
 \section{Equations of Motion}
-The motion of particles in the simulation is governed by equation \ref{eq:acceleration}. This is derived from Newton's Second Law of motion. The total force, $\mathbf{F}$ is a combination of forces as shown in equation \ref{eq:total force}. $\mathbf{F}_{n}$, $\mathbf{F}_{t}$, and $\mathbf{F}_{c}$ are the forces defined in section \ref{sec:DEM Forces}. $\mathbf{F}_{g}$ and $\mathbf{F}_{d}$ are the gravitational force and drag force, respectively, and are defined in section \ref{sec:drag and gravity}.
+The motion of particles in the simulation is governed by Equation \ref{eq:acceleration}. This is derived from Newton's Second Law of motion. The total force, $\mathbf{F}$ is a combination of forces as shown in Equation \ref{eq:total force}. $\mathbf{F}_{n}$, $\mathbf{F}_{t}$, and $\mathbf{F}_{c}$ are the forces defined in section \ref{sec:DEM Forces}. $\mathbf{F}_{g}$ and $\mathbf{F}_{d}$ are the gravitational force and drag force, respectively, and are defined in section \ref{sec:drag and gravity}.
 \begin{equation}
 \dfrac{d\mathbf{x}}{dt} = \mathbf{u}
 \label{eq:position}
@@ -162,19 +169,19 @@ Assuming low Reynolds numbers, Stokes's flow relationships can be used. This inc
 \label{eq:drag force}
 \mathbf{F}_{d} = \dfrac{m}{\tau_p} (\mathbf{u}_f - \mathbf{u})
 \end{equation}
-The particle relaxation time, $\tau_p$ is an approximate timescale describing how the particle's velocity changes in a fluid due to drag. Assuming Stokes's drag on a spherical particle, $\tau_p$ can be defined by equation \ref{eq:particle relaxation time} where $\rho_p$ is the particle density, $d_p$ is the particle diameter, and $\mu$ is the dynamic viscosity of the fluid.
+The particle relaxation time, $\tau_p$ is an approximate timescale describing how the particle's velocity changes in a fluid due to drag. Assuming Stokes's drag on a spherical particle, $\tau_p$ can be defined by Equation \ref{eq:particle relaxation time} where $\rho_p$ is the particle density, $d_p$ is the particle diameter, and $\mu$ is the dynamic viscosity of the fluid.
 \begin{equation}
 \label{eq:particle relaxation time}
 \tau_{p} = \dfrac{\rho_{p} d^{2}_{p}}{18 \mu}
 \end{equation}
-The gravity force is simple and defined in equation \ref{eq:gravitational force}.
+The gravity force is simple and defined in Equation \ref{eq:gravitational force}.
 \begin{equation}
 \label{eq:gravitational force}
 \mathbf{F}_{g} = m \mathbf{g}
 \end{equation}
 \section{Useful Results}
 \subsection{Reduced Mass}
-When considering the motion of two particles relative to each other a useful property is the reduced mass. Consider the relative acceleration of two particles in a collision. To determine the relative acceleration between the two particles, the two accelerations must be combined. It is known that $F_1$ and $F_2$ are equal and opposite. Finding the relative acceleration results in equation \ref{eq:relative acceleration}. This provides a relationship between the force in a collision and the relative acceleration as a result of that collision. It is of a similar form as Newton's Second Law but with the usual mass replaced with the reduced mass of the two particles (equation \ref{eq:reduced mass}). This reduced mass can be used instead of particle mass in equation \ref{eq:acceleration} when considering relative motion of particles.
+When considering the motion of two particles relative to each other a useful property is the reduced mass. Consider the relative acceleration of two particles in a collision. To determine the relative acceleration between the two particles, the two accelerations must be combined. It is known that $F_1$ and $F_2$ are equal and opposite. Finding the relative acceleration results in Equation \ref{eq:relative acceleration}. This provides a relationship between the force in a collision and the relative acceleration as a result of that collision. It is of a similar form as Newton's Second Law but with the usual mass replaced with the reduced mass of the two particles (Equation \ref{eq:reduced mass}). This reduced mass can be used instead of particle mass in Equation \ref{eq:acceleration} when considering relative motion of particles.
 \begin{align}
 F_1 &= m_1 a_1 \nonumber \text{, } F_2 = m_2 a_2 \nonumber
 \\F_1 &= -F_2 \nonumber
@@ -185,7 +192,7 @@ F_1 &= m_1 a_1 \nonumber \text{, } F_2 = m_2 a_2 \nonumber
 \\F_2 &= \Big(\dfrac{m_1 m_2}{m_1 + m_2}\Big) a_{rel} \label{eq:relative acceleration}
 \\m_{reduced} &= \dfrac{m_1 m_2}{m_1 + m_2} \label{eq:reduced mass}
 \end{align}
-It should be noted that equation \ref{eq:reduced mass} reduces to $m_1$ if $m_2$ tends to infinity. This is useful when considering static particles with infinite density and is used extensively for verifying simulation results (see section \ref{sec:verification}).
+It should be noted that Equation \ref{eq:reduced mass} reduces to $m_1$ if $m_2$ tends to infinity. This is useful when considering static particles with infinite density and is used extensively for verifying simulation results (see section \ref{sec:verification}).
 \subsection{Collision Duration}
 \label{sec:collision duration}
 The collision duration is the time it takes for a collision to occur. This is important because if the simulation timestep is not low enough there will not be enough steps within a collision to produce accurate results. The collision duration is fully derived in section \ref{der:collision duration} and is calculated using Equation \ref{eq:collision duration}. The collision duration is often simplified to Equation \ref{eq:simplified collision duration}.
@@ -198,7 +205,7 @@ t_{col} = \pi \sqrt{\dfrac{m}{k_e}}
 \label{eq:simplified collision duration}
 \end{equation}
 \subsection{Coefficient of Restitution}
-The coefficient of restitution is ratio of speed before and after a collision. For a damped collision the coefficient of restitution is between 0 and 1. The coefficient of restitution for a normal collision is fully derived in Appendix \ref{ch:Derivations} and is related to the damping coefficient, $\eta$, by equation \ref{eq:damping coefficient}. This is derived in section \ref{der:coefficient of restitution}.
+The coefficient of restitution is ratio of speed before and after a collision. For a damped collision the coefficient of restitution is between 0 and 1. The coefficient of restitution for a normal collision is fully derived in Appendix \ref{ch:Derivations} and is related to the damping coefficient, $\eta$, by Equation \ref{eq:damping coefficient}. This is derived in section \ref{der:coefficient of restitution}.
 \begin{equation}
 \eta = - 2 ln(\epsilon) \sqrt{\dfrac{m k_e}{\pi^2 + ln(\epsilon)^2}}
 \label{eq:damping coefficient}
@@ -210,7 +217,7 @@ For arbitrary polyhedral particles rotation can be important since the particles
 A key part of the DEM is effective collision detection. If approached naively collision detection is simply calculating the overlap for every particle with every other particle. This is extremely inefficient and causes the simulation to run in $O(N^2)$ time, where $N$ is the number of particles. To improve efficiency this process can be split into two phases. Firstly, the broad phase determines which particles could collide with which other particles. This reduces the number of particle collisions that have to be calculated. The second phase, collision resolution, resolves the collisions by measuring overlap. The goal of the broad phase is to allow the simulation to run in $O(N)$ time. Figure \ref{fig:algorithm_flowchart} shows the basic simulation loop and the different simulation phases.
 \\\\There are many different algorithms that can be used for broad phase collision detection, varying in complexity and efficiency. Although some of the more complex algorithms were considered, the gain in efficiency was not significant enough to outweigh the significant increase in implementation complexity. For this reason the simplest algorithm, spatial zoning, has been chosen for this project.
 \\\\Spatial zoning separates the simulation domain into control volumes. Particles are then sorted into the control volumes. Particles in neighbouring, or the same, control volumes are then resolved fully. It is most efficient to have the control volumes as small as possible because this reduces the number of particles in neighbouring control volumes. Control volumes must be at least as large as the largest particle in the simulation to ensure that neighbouring control volumes contain all possible collisions. For monodisperse particle populations this means that the control volumes should be the same size as the particles. For polydisperse particle populations this means that the control volumes should be the size of the largest particle in the population. As mentioned in Tuley\cite{tuley} this can decrease efficiency for particle populations with a large range of sizes. Sections \ref{sec:Python Collision Detection} and \ref{sec:OpenCL Collision Detection} provide further detail as to how this is implemented computationally in Python and with OpenCL, respectively.
-\begin{figure}
+\begin{figure}[!htb]
 \centering
 \input{figures/algorithm.tex}
 \caption{The basic simulation loop and simulation phases.}
@@ -225,28 +232,28 @@ The DEM model used in this project has stiff governing equations. This means tha
 \\\\The trapezoidal rule is an implicit integration method that uses the average of the current and next values. It has second order accuracy.
 \\\\For the implicit methods either an analytic solution to the implicit equations or a numerical solution can be used. For simplicity, only the functions that can form analytic solutions from the implicit equations will use the implicit methods.
 \subsection{Velocity}
-For equation \ref{eq:acceleration} the forward Euler method for integrating acceleration to get velocity at iteration $n + 1$ is shown in equation \ref{eq:Forward Euler Acceleration}. In this case the force, $F$, is a function of $u_n$.
+For Equation \ref{eq:acceleration} the forward Euler method for integrating acceleration to get velocity at iteration $n + 1$ is shown in Equation \ref{eq:Forward Euler Acceleration}. In this case the force, $F$, is a function of $u_n$.
 \begin{equation}
 u_{n+1} = u_{n} + \dfrac{F(u_n)}{m}\Delta t
 \label{eq:Forward Euler Acceleration}
 \end{equation}
-\\For the same equation, the backward Euler method is shown in equation \ref{eq:Backward Euler Acceleration}. In this case the force, $F$, is a function of $u_{n+1}$.
+\\For the same equation, the backward Euler method is shown in Equation \ref{eq:Backward Euler Acceleration}. In this case the force, $F$, is a function of $u_{n+1}$.
 \begin{equation}
 u_{n+1} = u_{n} + \dfrac{F(u_{n+1})}{m}\Delta t
 \label{eq:Backward Euler Acceleration}
 \end{equation}
-For the DEM the total force is a combination of forces (see equation \ref{eq:total force}). Drag and gravity forces are only calculated once per iteration and so can be calculated at the same time as the velocity. However, collision forces are calculated multiple times per iteration to get contributions from all collisions and so cannot be easily calculated at the same time as the velocity. For this reason, the normal force, tangential force, and cohesion force are treated as fixed at the time of velocity calculation. Gravity is also fixed and so equation \ref{eq:total force} can be represented as in equations \ref{eq:force at iteration} and \ref{eq:fixed force plus}. $F(u)$ can then be used in equation \ref{eq:Forward Euler Acceleration} or \ref{eq:Backward Euler Acceleration}.
+For the DEM the total force is a combination of forces (see Equation \ref{eq:total force}). Drag and gravity forces are only calculated once per iteration and so can be calculated at the same time as the velocity. However, collision forces are calculated multiple times per iteration to get contributions from all collisions and so cannot be easily calculated at the same time as the velocity. For this reason, the normal force, tangential force, and cohesion force are treated as fixed at the time of velocity calculation. Gravity is also fixed and so Equation \ref{eq:total force} can be represented as in Equations \ref{eq:force at iteration} and \ref{eq:fixed force plus}. $F(u)$ can then be used in Equation \ref{eq:Forward Euler Acceleration} or \ref{eq:Backward Euler Acceleration}.
 \begin{align}
 F(u) &= F_n + F_t + F_c + F_g + F_d(u)
 \label{eq:force at iteration} \\
 F_{fixed} &= F_n + F_t + F_c + F_g \\
 F(u) &= F_{fixed} + F_d(u) \label{eq:fixed force plus}
 \end{align}
-For equation \ref{eq:Forward Euler Acceleration} it is trivial to calculate the next velocity as the RHS is only dependant on $u_n$ which is known. This results in equation \ref{eq:explicit next velocity}.
+For Equation \ref{eq:Forward Euler Acceleration} it is trivial to calculate the next velocity as the RHS is only dependant on $u_n$ which is known. This results in Equation \ref{eq:explicit next velocity}.
 \begin{equation}
 u_{n+1} = u_n + \dfrac{F_{fixed} + F_d(u_n)}{m} \Delta t \label{eq:explicit next velocity}
 \end{equation}
-Equation \ref{eq:Backward Euler Acceleration} must be rearranged to get $u_{n+1}$ as a function of $u_{n}$ only. This results in equation \ref{eq:implicit next velocity}.
+Equation \ref{eq:Backward Euler Acceleration} must be rearranged to get $u_{n+1}$ as a function of $u_{n}$ only. This results in Equation \ref{eq:implicit next velocity}.
 \begin{align}
 F(u_{n+1}) &= F_{fixed} + \dfrac{m}{\tau_p}(u_f - u_{n+1}) \nonumber \\
 u_{n+1} &= u_n + \dfrac{F_{fixed} + \dfrac{m}{\tau_p}(u_f - u_{n+1})}{m}\Delta t \nonumber \\
@@ -254,14 +261,14 @@ u_{n+1} &= u_n + \dfrac{F_{fixed} + \dfrac{m}{\tau_p}(u_f - u_{n+1})}{m}\Delta t
 u_{n+1} (1 + \dfrac{\Delta t}{\tau}) &= u_n + \dfrac{F_{fixed}}{m}\Delta t + \dfrac{\Delta t}{\tau}(u_f) \nonumber \\
 u_{n+1} &= \dfrac{\tau u_n + F_{fixed} \tau \Delta t / m + u_f \Delta t}{\tau + \Delta t} \label{eq:implicit next velocity}
 \end{align}
-Equation \ref{eq:implicit next velocity} can be rearranged to be in the same form as equation \ref{eq:explicit next velocity} as shown in equation \ref{eq:rearranged implicit next velocity}.
+Equation \ref{eq:implicit next velocity} can be rearranged to be in the same form as Equation \ref{eq:explicit next velocity} as shown in Equation \ref{eq:rearranged implicit next velocity}.
 \begin{equation}
 u_{n+1} = u_n + \Big(\dfrac{u_f - u_n + \tau F_{fixed} / m}{\tau + \Delta t}\Big)\Delta t
 \label{eq:rearranged implicit next velocity}
 \end{equation}
 A comparison of the accuracy of these integration schemes is in section \ref{sec:integration scheme comparison}.
 \subsection{Position}
-Equation \ref{eq:position} is a very simple differential equation that can be solved by integrating. Since the velocity does not directly depend on the position, and the velocity for the next iteration is calculated before the position, it is trivial to use the trapezoidal rule to calculate position. It has all of the advantages of accuracy without the disadvantage of increased complexity. The position can thus be calculated with equation \ref{eq:iterative position}.
+Equation \ref{eq:position} is a very simple differential equation that can be solved by integrating. Since the velocity does not directly depend on the position, and the velocity for the next iteration is calculated before the position, it is trivial to use the trapezoidal rule to calculate position. It has all of the advantages of accuracy without the disadvantage of increased complexity. The position can thus be calculated with Equation \ref{eq:iterative position}.
 \begin{equation}
 x_{n+1} = x_n + \dfrac{u_n + u_{n+1}}{2}\Delta t
 \label{eq:iterative position}
@@ -269,7 +276,7 @@ x_{n+1} = x_n + \dfrac{u_n + u_{n+1}}{2}\Delta t
 \subsection{Comparison of Integration Schemes}
 \label{sec:integration scheme comparison}
 This analysis was performed using the Python implementation discussed in Chapter \ref{ch:Python Implementation}.
-\\Figure \ref{fig:terminal_velocity_implicit_explicit} shows the speed of a particle in a fluid starting from rest and accelerating to the fluid velocity. It shows that the explicit velocity equation (equation \ref{eq:explicit next velocity}) over-estimates the speed and the implicit velocity equation (equation \ref{eq:implicit next velocity}) under-estimates the speed. The error in the implicit result is less than the error in the explicit result.
+\\Figure \ref{fig:terminal_velocity_implicit_explicit} shows the speed of a particle in a fluid starting from rest and accelerating to the fluid velocity. It shows that the explicit velocity equation (Equation \ref{eq:explicit next velocity}) over-estimates the speed and the implicit velocity equation (Equation \ref{eq:implicit next velocity}) under-estimates the speed. The error in the implicit result is less than the error in the explicit result.
 \\\\Figure \ref{fig:avg_percent_diff_against_timestep} shows the average percentage difference between each numerical method and the analytic solution for varying timestep. This shows that the explicit method is exactly first order accurate whereas the implicit result is a bit higher than first order accurate. This means that it is better to use the implicit method than the explicit method.
 \begin{figure}[!htb]
 \centering
@@ -285,7 +292,7 @@ This analysis was performed using the Python implementation discussed in Chapter
 \end{figure}
 \section{Friction Model}
 \label{sec:friction model}
-The static friction models outlined in Section \ref{sec:tangential contact force} both rely on the tangential displacement during an interaction, $\zeta$. This is a difficult property to determine as it requires a collision history to be maintained for it to be correctly measured. Maintaining a collision history adds significant complication to a simulation as it requires data to be stored between timesteps an for collisions in each timestep to be related to one another. As this implementation of the DEM ignores rotation, the accuracy of the simulation when considering sliding is limited. Increasing the simulation complexity in order to slightly improve the friction model is not necessary so various alternatives have been considered. The graphs presented below use the friction verification case from Section \ref{sec:friction sliding verification}.
+The static friction models outlined in Section \ref{sec:tangential contact force} both rely on the tangential displacement during an interaction, $\zeta$. This is a difficult property to determine as it requires a collision history to be maintained for it to be correctly measured. Maintaining a collision history adds significant complication to a simulation as it requires data to be stored between timesteps. As this implementation of the DEM ignores rotation, the accuracy of the simulation when considering sliding is limited. Increasing the simulation complexity in order to slightly improve the friction model is not necessary so various alternatives have been considered. The graphs presented below use the friction verification case from Section \ref{sec:friction sliding verification}.
 \subsection{Dynamic Friction Only}
 Removing the static friction part of the model entirely is tempting, it would simplify the calculation and make the code slightly faster. However, the dynamic friction model is prone to instability, especially at high timesteps, the particle ends up oscillating around a point because the model does not handle overshoot well. This behaviour is shown in Figure \ref{fig:dynamic_only}.
 \begin{figure}[!ht]
@@ -315,8 +322,9 @@ The static friction model with damping from Equation \ref{eq:static friction wit
 A series of verification test cases have been developed in order to assess the accuracy of the numerical model in the program implementations. The definitions and equations for these models are in this section and the implementation comparisons are in Sections \ref{sec:Python verification} and \ref{sec:OpenCL verification}.
 \label{sec:verification}
 \subsection{Drag}
+\label{sec:drag verification}
 The drag verification case is a particle in a fluid. The fluid has a constant velocity in the x direction denoted $u_f$. There is no gravity and no other particles are present. The particle accelerates to the speed of the fluid.
-\\The position and velocity of the particle are determined by equations \ref{eq:drag position} and \ref{eq:drag velocity}, respectively. These equations are derived in section \ref{der:drag}.
+\\The position and velocity of the particle are determined by Equations \ref{eq:drag position} and \ref{eq:drag velocity}, respectively. These equations are derived in section \ref{der:drag}.
 \begin{align}
 &x = u_f \tau (e^{-t/\tau} - 1) + u_f t \label{eq:drag position} \\
 &\dot{x} = u_f (1 - e^{-t/\tau}) \label{eq:drag velocity} \\
@@ -324,10 +332,11 @@ The drag verification case is a particle in a fluid. The fluid has a constant ve
 \subsection{Normal Collision}
 \label{sec:normal collision verification}
 The normal collision verification case is the most simple normal collision. The first particle (p1) has infinite density and so is fixed in space. The second particle (p2) has an initial velocity, $u_0$, towards the first particle and starts at $x = d_b$ so that the body surfaces are just touching. There is no drag, no gravity, and no cohesion. This arrangement is depicted in Figure \ref{fig:normal collision}.
-\\The position and velocity of the second particle are determined by equations \ref{eq:normal collision position} and \ref{eq:normal collision velocity}, respectively. These equations are derived in section \ref{der:normal collision}.
+\\The position and velocity of the second particle are determined by Equations \ref{eq:normal collision position} and \ref{eq:normal collision velocity}, respectively. These equations are derived in section \ref{der:normal collision}.
 \begin{align}
 &x = e^{at} \dfrac{u_0}{b} sin(bt) + d_b \label{eq:normal collision position} \\
-&\dot{x} = u_0 e^{at} (\dfrac{a}{b} sin(bt) + cos(bt)) \label{eq:normal collision velocity}
+&\dot{x} = u_0 e^{at} (\dfrac{a}{b} sin(bt) + cos(bt)) \label{eq:normal collision velocity} \\
+&\text{Where: } a = \dfrac{-\eta}{2m} \text{,    } b = \dfrac{\sqrt{4mk_e - \eta ^ 2}}{2m} \nonumber
 \end{align}
 \begin{figure}[!ht]
 \centering
@@ -338,7 +347,7 @@ The normal collision verification case is the most simple normal collision. The 
 \subsection{Friction Sliding}
 \label{sec:friction sliding verification}
 The friction sliding test case is a particle sliding along a wall. The particle is started at the theoretical height at which the normal force balances the gravitational force. This ensures that the friction force is as stable as possible and not affected by changing normal force. The particle also has an initial velocity. This arrangement is depicted in Figure \ref{fig:friction sliding}.
-The analytic solution to this case uses the dynamic friction only but is sufficient to assess the accuracy of the model. The position and velocity of the particle are determined by equations \ref{eq:friction sliding position} and \ref{eq:friction sliding velocity}, respectively.
+The analytic solution to this case uses the dynamic friction only but is sufficient to assess the accuracy of the model. The position and velocity of the particle are determined by Equations \ref{eq:friction sliding position} and \ref{eq:friction sliding velocity}, respectively.
 \begin{align}
 &\dot{x} = - \mu g t + u_0 \label{eq:friction sliding velocity} \\
 &x = \dfrac{- \mu g}{2}t^2 + u_0 t + x_0 \label{eq:friction sliding position}
@@ -350,6 +359,7 @@ The analytic solution to this case uses the dynamic friction only but is suffici
 \label{fig:friction sliding}
 \end{figure}
 \subsection{Normal Collision with Cohesion}
+\label{sec:normal collision with cohesion verification}
 The cohesion collision verification case is very similar to the normal collision verification case (section \ref{sec:normal collision verification}). The first particle (p1) has infinite density and so is fixed in space. The second particle (p2) has an initial velocity, $u_0$, towards the first particle and starts at $x = d_e$ so that the effect surfaces are just touching. There is no drag and no gravity. This arrangement is depicted in Figure \ref{fig:cohesion collision}.
 \\The position and velocity of the second particle are determined by the set of equations below. These equations are derived in section \ref{der:normal collision with cohesion}.
 \begin{align}
@@ -390,7 +400,7 @@ Broad phase collision detection uses the simple spatial zoning technique from se
 \\\\The domain is represented by a three dimensional array where each entry is a control volume. The control volume is a list of particles in its bounds. The global list of particles is iterated over and each particle assigns itself to the correct control volume. This results in a three dimensional array where each control volume has all of the particles within its bounds as an array. Collision objects are then created for each pair of particles in the same, or neighbouring, control volumes. This approach reduces the problem from $O(N^{2})$ to almost $O(N)$ as shown in figure \ref{fig:run_time_against_N_python}.
 \begin{figure}[!ht]
 \centering
-\includegraphics[scale=0.75]{figures/RunTimeAgainstNumberOfParticlesPython.png}
+\includegraphics[scale=0.65]{figures/RunTimeAgainstNumberOfParticlesPython.png}
 \caption{This graph shows that the simple spatial zoning technique reduces the problem from $O(N^{2})$ down to almost $O(N)$.}
 \label{fig:run_time_against_N_python}
 \end{figure}
@@ -405,29 +415,83 @@ To determine drag a flow velocity must be calculated. In this implementation it 
 A gravity function can also be passed into the Particle object upon instantiation. Although this defaults to a simple -9.81$ms^{-2}$ in the negative z direction, it can be chosen to simulate a rotating frame of reference or other complex configurations. A rotating frame of reference has been implemented in the `gravity\_shift\_closed\_box' example simulation\cite{DEMApples}.
 \subsubsection{DEM Forces}
 The DEM forces that are calculated in collisions are stored in an array within the Particle object. When the particle is iterated the array is summed and used in the iteration calculation. After this calculation the array is cleared so that forces do not get incorrectly added multiple times. This configuration makes it simple to add and remove forces to the simulation whenever necessary and could also be used in general to add any force to the particle.
-\section{Optimization and Performance}
-\label{sec:Python verification}
 \section{Verification}
+\label{sec:Python verification}
+This section contains the results of the verification cases from Section \ref{sec:verification} for the Python implementation. The graphs in this section compare the results of simulations against the analytic solutions. Overall, the results show that the simulation is suitably accurate and as timestep decreases the simulation accuracy increases, as expected.
 \subsection{Drag}
+This is the drag verification case from Section \ref{sec:drag verification}. The properties used are in Figure \ref{fig:python drag properties} and the results are shown in Figure \ref{fig:python_drag_verification}. The results show that the simulation results closely match the analytic solution and that the error decreases as the timestep decreases.
+\begin{figure}[!htb]
+\centering
+\begin{tabular}{| c c |}
+\hline
+Property & Value\\
+\hline
+Particle Density $\rho$ & 10 $kg/m^3$ \\
+Particle Diameter $d_b$ & 0.1 $m$ \\
+Fluid Viscosity $\mu$ & 0.00193 $Ns/m^2$ \\
+$x$ Fluid Velocity $u_f$ & 1 $m/s$ \\
+\hline
+\end{tabular}
+\caption{Properties used in the Python drag verification case.}
+\label{fig:python drag properties}
+\end{figure}
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.5]{figures/opencl_verification/drag_verification.png}
-\caption{Normalized position and speed against time of a particle in a moving fluid.}
+\caption{Normalized position and speed against time of a particle in a moving fluid. In this graph time is normalized with the particle relaxation time $\tau$, position is normalized with particle diameter $d_p$, and velocity is normalized with fluid velocity $u_f$.}
 \label{fig:python_drag_verification}
 \end{figure}
 \subsection{Normal Collision}
+This is the normal collision verification case from Section \ref{sec:normal collision verification}. The properties used are in Figure \ref{fig:python normal collision properties} and the results are shown in Figure \ref{fig:python_normal_force_verification}. The results show that the simulation results closely match the analytic solution and that the error decreases as the timestep decreases.
+\begin{figure}[!htb]
+\centering
+\begin{tabular}{| c c |}
+\hline
+Property & Value\\
+\hline
+Initial $x$ Velocity $u_0$ & -2 $m/s$ \\
+Stiffness $k_e$ & 1e5 $N/m$ \\
+Coefficient of Restitution $\epsilon$ & 0.8 \\
+Particle Density $\rho$ & 10 $kg/m^3$ \\
+Particle Diameter $d_b$ & 0.1 $m$ \\
+\hline
+\end{tabular}
+\caption{Properties used in the Python normal collision verification case.}
+\label{fig:python normal collision properties}
+\end{figure}
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.5]{figures/python_verification/normal_force_verification.png}
-\caption{Normalized position and speed against time during a normal collision.}
+\caption{Normalized position and speed against time during a normal collision. In this graph time is normalized with the collision duration $t_{collision}$, position is normalized with particle diameter $d_p$, and velocity is normalized with initial velocity $u_0$.}
 \label{fig:python_normal_force_verification}
 \end{figure}
 \subsection{Friction Sliding}
+This is the normal collision verification case from Section \ref{sec:friction sliding verification}. The properties used are in Figure \ref{fig:python friction sliding properties} and the results are shown in Figure \ref{fig:python_friction_verification}. The results show that the simulation results closely match the analytic solution. The error does decrease as the timestep decreases but there is no clear evidence that it does so in a predictable way.
+\begin{figure}[!htb]
+\centering
+\begin{tabular}{| c c |}
+\hline
+Property & Value\\
+\hline
+Initial $x$ Velocity $u_0$ & 1 $m/s$ \\
+Initial $x$ Position $x_0$ & 0 $m$ \\
+Gravitational Acceleration $g$ & 9.81 $m/s^2$ \\
+Stiffness $k_e$ & 1e5 $N/m$ \\
+Coefficient of Restitution $\epsilon$ & 0.8 \\
+Particle Density $\rho$ & 10 $kg/m^3$ \\
+Particle Diameter $d_b$ & 0.1 $m$ \\
+Coefficient of Friction $\mu$ & 0.6 \\
+Friction Stiffness $k_f$ & 1e8 $N/m$ \\
+\hline
+\end{tabular}
+\caption{Properties used in the Python friction sliding verification case.}
+\label{fig:python friction sliding properties}
+\end{figure}
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.4]{figures/python_verification/friction_verification.png}
 \includegraphics[scale=0.4]{figures/python_verification/friction_verification_zoomed.png}
-\caption{Normalized position and speed against time during a normal collision.}
+\caption{Normalized position and speed against time during a normal collision. In this graph time is normalized with the collision duration $t_{collision}$, position is normalized with particle diameter $d_p$, and velocity is normalized with initial velocity $u_0$.}
 \label{fig:python_friction_verification}
 \end{figure}
 \chapter{OpenCL Implementation}
@@ -461,7 +525,7 @@ The main calculations for this implementation are performed on the device. This 
 \label{sec:OpenCL Collision Detection}
 To improve efficiency, in both speed and resource usage, performing naive collision detection is not viable for large numbers of particles. To improve on this the spatial zoning technique is used similar to the initial Python implementation. However, C does not make arrays of varying sizes easy or efficient so the data structures used and the algorithm implementation must be significantly different.
 \\\\The basic problem is how to store control volumes as lists of references to particles. In Python this was easy, a simple 3D array of control volumes with lists of particle objects inside was sufficient. Various approaches to solving this problem were considered. One approach was to encode particle IDs (equal to the index of a particle in the particles array) with a hashing function into a single number that could be turned back into particle IDs on the device. However, this approach was infeasible because the numbers would get so large that they could not be stored accurately or efficiently.
-\\\\The approach used is to have multiple passes of assignment of particles to control volumes. The first pass simply counts how many particles are in each control volume. This is stored in a one dimensional array of control volumes represented by integers of how many particles each contains. From this array another array is created. This array is of all the particle IDs but sorted into control volumes. The control volumes are of lengths defined by the count array and start at indexes stored in a third array. If a control volume has no particles, the start index of the array is set to -1. For the unsigned long data type this overflows to the maximum value (approximately 4.3 billion) which will likely never be used to index particles. This arrangement of arrays is shown in figure \ref{fig:cv_array_structure}.
+\\\\The approach used is to have multiple passes of assignment of particles to control volumes. The first pass simply counts how many particles are in each control volume. This is stored in a one dimensional array of control volumes represented by integers of how many particles each contains. From this array another array is created. This array is of all the particle IDs but sorted into control volumes. The control volumes are of lengths defined by the count array and start at indexes stored in a third array. If a control volume has no particles, the start index of the array is set to -1. For the unsigned long data type this overflows to the maximum value (approximately 4.3 billion) which will likely never be used to index particles. This arrangement of arrays is shown in Figure \ref{fig:cv_array_structure}.
 \\\\This approach is somewhat similar to how memory is handled on a computer, but using indexes instead of pointers. For an entirely host-side method an array of pointers to arrays of particles could be used, but this would not be sensible when dealing with device memory as each array would need to be moved to the device before use. Having three arrays that hold all the necessary properties simplifies the memory buffer process significantly. The maths required for turning positions and control volume coordinates into indexes in these arrays are contained in cvUtils.c and kernelUtils.cl for host and device, respectively.
 \begin{figure}[!ht]
 \centering
@@ -476,7 +540,7 @@ To improve efficiency, in both speed and resource usage, performing naive collis
 The collision resolution kernel is actually separated into multiple kernels for different types of collision (particle-particle and particle-wall) however the behaviour of these kernels is almost identical. For this discussion we will use the particle-particle kernel as an example. The kernel takes a pointer to an array of collision structures and a pointer to the array of particles. The DEM collision force calculations are run for each collision and the forces are added to the DEM forces vector in the relevant particle structures. This approach has been chosen because it is easier to sum the forces as they are calculated rather than attempt to predict the length of the necessary force array to store each force separately as in the Python implementation.
 \\\\This approach causes a serious problem as it is possible that multiple collision kernels will need to write data to the same particle at the same time. The solution to this is to use the atomic operations available in OpenCL. Unfortunately, OpenCL only natively supports full atomic operations for int and unsigned int data types. OpenCL does support an exchange atomic operator for single precision floats, but this is not the best approach for doing atomic arithmetic for floats.
 \\\\An approach for doing atomic addition (as is necessary in this case) is recommended in an online article\cite{atomic_addition}.
-The code is shown in figure \ref{fig:atomic_float_addition}. This approach uses the comparison exchange atomic operator by creating a union of the floats with unsigned ints. This works well because the bits being exchanged are the same for the float and unsigned int and actual atomic arithmetic is not necessary so the difference between the data types does not matter. Thus the new value is calculated and if the value used to calculate it has changed in that time the calculation is repeated with the updated value.
+The code is shown in Figure \ref{fig:atomic_float_addition}. This approach uses the comparison exchange atomic operator by creating a union of the floats with unsigned ints. This works well because the bits being exchanged are the same for the float and unsigned int and actual atomic arithmetic is not necessary so the difference between the data types does not matter. Thus the new value is calculated and if the value used to calculate it has changed in that time the calculation is repeated with the updated value.
 \begin{figure}[!ht]
 \begin{lstlisting}[language=C]
  _INLINE_ void atomicAdd_g_f(volatile __global float *addr, float val)
@@ -508,32 +572,107 @@ Often a framework is used for unit testing, however there is not a quick, easy f
 \\To make it easy to run these tests repeatedly 'run\_tests.c' has been created to run all of the tests and indicate which, if any, fails. A similar implementation is executed at simulation runtime to ensure that all tests are passed before starting a simulation run.
 \section{Verification}
 \label{sec:OpenCL verification}
+This section contains the results of the verification cases from Section \ref{sec:verification} for the OpenCL implementation. The graphs in this section compare the results of simulations against the analytic solutions. Overall, the results show that the simulation is suitably accurate and as timestep decreases the simulation accuracy increases, as expected.
 \subsection{Drag}
+This is the drag verification case from Section \ref{sec:drag verification}. The properties used are in Figure \ref{fig:opencl drag properties} and the results are shown in Figure \ref{fig:opencl_drag_verification}. The results show that the simulation results closely match the analytic solution and that the error decreases as the timestep decreases.
+\begin{figure}[!htb]
+\centering
+\begin{tabular}{| c c |}
+\hline
+Property & Value\\
+\hline
+Particle Density $\rho$ & 10 $kg/m^3$ \\
+Particle Diameter $d_b$ & 0.1 $m$ \\
+Fluid Viscosity $\mu$ & 0.00193 $Ns/m^2$ \\
+$x$ Fluid Velocity $u_f$ & 1 $m/s$ \\
+\hline
+\end{tabular}
+\caption{Properties used in the OpenCL drag verification case.}
+\label{fig:opencl drag properties}
+\end{figure}
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.5]{figures/opencl_verification/drag_verification.png}
-\caption{Normalized position and speed against time of a particle in a moving fluid.}
+\caption{Normalized position and speed against time of a particle in a moving fluid. In this graph time is normalized with the particle relaxation time $\tau$, position is normalized with particle diameter $d_p$, and velocity is normalized with fluid velocity $u_f$.}
 \label{fig:opencl_drag_verification}
 \end{figure}
 \subsection{Normal Collision}
+This is the normal collision verification case from Section \ref{sec:normal collision verification}. The properties used are in Figure \ref{fig:opencl normal collision properties} and the results are shown in \ref{fig:opencl_normal_force_verification}. The results show that the simulation results closely match the analytic solution and that the error decreases as the timestep decreases.
+\begin{figure}[!htb]
+\centering
+\begin{tabular}{| c c |}
+\hline
+Property & Value\\
+\hline
+Initial $x$ Velocity $u_0$ & -2 $m/s$ \\
+Stiffness $k_e$ & 1e5 $N/m$ \\
+Coefficient of Restitution $\epsilon$ & 0.8 \\
+Particle Density $\rho$ & 10 $kg/m^3$ \\
+Particle Diameter $d_b$ & 0.1 $m$ \\
+\hline
+\end{tabular}
+\caption{Properties used in the OpenCL normal collision verification case.}
+\label{fig:opencl normal collision properties}
+\end{figure}
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.5]{figures/opencl_verification/normal_force_verification.png}
-\caption{Normalized position and speed against time during a normal collision.}
+\caption{Normalized position and speed against time during a normal collision. In this graph time is normalized with the collision duration $t_{collision}$, position is normalized with particle diameter $d_p$, and velocity is normalized with initial velocity $u_0$.}
 \label{fig:opencl_normal_force_verification}
 \end{figure}
 \subsection{Friction Sliding}
+This is the normal collision verification case from Section \ref{sec:friction sliding verification}. The properties used are in Figure \ref{fig:opencl friction sliding properties} and the results are shown in Figure \ref{fig:opencl_friction_verification}. The results show that the simulation results closely match the analytic solution. The error generally decreases as the timestep decreases but it is unpredictable. The results show that the position error is actually higher for a timestep of $t_{collision}/64$ than for a timestep of $t_{collision}/32$. However, the results are accurate enough for the purpose of this simulation.
 \begin{figure}[!htb]
 \centering
-\includegraphics[scale=0.5]{figures/opencl_verification/friction_verification.png}
-\caption{Normalized position and speed against time during a friction event.}
+\begin{tabular}{| c c |}
+\hline
+Property & Value\\
+\hline
+Initial $x$ Velocity $u_0$ & 1 $m/s$ \\
+Initial $x$ Position $x_0$ & 0 $m$ \\
+Gravitational Acceleration $g$ & 9.81 $m/s^2$ \\
+Stiffness $k_e$ & 1e5 $N/m$ \\
+Coefficient of Restitution $\epsilon$ & 0.8 \\
+Particle Density $\rho$ & 10 $kg/m^3$ \\
+Particle Diameter $d_b$ & 0.1 $m$ \\
+Coefficient of Friction $\mu$ & 0.6 \\
+Friction Stiffness $k_f$ & 1e5 $N/m$ \\
+\hline
+\end{tabular}
+\caption{Properties used in the OpenCL friction sliding verification case.}
+\label{fig:opencl friction sliding properties}
+\end{figure}
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.4]{figures/opencl_verification/friction_verification.png}
+\includegraphics[scale=0.4]{figures/opencl_verification/friction_verification_zoomed.png}
+\caption{Normalized position and speed against time during a friction event. In this graph time is normalized with the collision duration $t_{collision}$, position is normalized with particle diameter $d_p$, and velocity is normalized with initial velocity $u_0$.}
 \label{fig:opencl_friction_verification}
 \end{figure}
 \subsection{Normal Collision with Cohesion}
+This is the normal collision with cohesion verification case from Section \ref{sec:normal collision with cohesion verification}. The properties used are in Figure \ref{fig:opencl normal collision with cohesion properties} and the results are shown in \ref{fig:opencl_normal_force_verification}. The results show that the simulation results closely match the analytic solution and that the error decreases as the timestep decreases. Notably, the error causes overshoot on the position so particles are less likely to stick in a simulation than they would in the analytic solution.
+\begin{figure}[!htb]
+\centering
+\begin{tabular}{| c c |}
+\hline
+Property & Value\\
+\hline
+Initial $x$ Velocity $u_0$ & -2 $m/s$ \\
+Stiffness $k_e$ & 1e5 $N/m$ \\
+Cohesion Stiffness $k_c$ & 100 $N/m$ \\
+Coefficient of Restitution $\epsilon$ & 0.8 \\
+Particle Density $\rho$ & 10 $kg/m^3$ \\
+Particle Diameter $d_b$ & 0.1 $m$ \\
+Particle Effect Diameter $d_e$ & 0.15 $m$ \\
+\hline
+\end{tabular}
+\caption{Properties used in the OpenCL normal collision with cohesion verification case.}
+\label{fig:opencl normal collision with cohesion properties}
+\end{figure}
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.5]{figures/opencl_verification/cohesion_verification.png}
-\caption{Normalized position and speed against time during a normal collision with cohesion.}
+\caption{Normalized position and speed against time during a normal collision with cohesion. In this graph time is normalized with the collision duration $t_{collision}$, position is normalized with particle diameter $d_p$, and velocity is normalized with initial velocity $u_0$.}
 \label{fig:opencl_cohesion_verification}
 \end{figure}
 \section{Optimization and Performance}
@@ -573,10 +712,13 @@ One key objective of particle simulations with collisions is to reduce the simul
 \end{figure}
 \chapter{Application}
 \label{ch:Application}
-\textit{General overview of agglomerates and why different properties are interesting.}
+An agglomerate is a group of particles held together by cohesive forces. Agglomerates can be formed from electrostatically charged dust, magnetic particles, or a variety of other forces. When designing devices that handle cohesive particles it is important to understand agglomeration behaviour in varying conditions. The simulation tool developed in this project can be applied to studying this behaviour. The two properties that are examined in this chapter are the Stokes Number (see Section \ref{sec:stokes number}) and the Stickiness Number (see Section \ref{sec:stickiness number}).
 \section{Simulation Setup}
-\textit{Initial conditions, properties to be varied, how this is defined in the program.}
+The simulation uses a Taylor-Green Vortex fluid flow field (see Section \ref{sec:tgv flow}). It is a relatively simple flow field that can be easily set to fit a cubic domain boundary. It also works well for bringing particles together so that collisions are more frequent than a stationary fluid. In addition it is a constant source of additional energy so that the particles do not simply lose energy and eventually stay at rest.
+\\\\The simulation uses periodic boundary conditions such that if a particle were to leave the domain it re-enters the domain on the opposite side. This provides a decent approximation of a larger domain with more particles by assuming that the simulation domain is representative of a larger domain as a whole.
+\\\\Section \ref{sec:tgv flow} describes in more detail the mathematical setup of a Taylor-Green Vortex flow. Section \ref{sec:stokes number} defines the Stokes Number and how it is varied in the simulation. Section \ref{sec:stickiness number} defines the Stickiness Number and how it is varied in the simulation. Section \ref{sec:simulation properties} defines all of the constant properties used in the simulation. Section \ref{sec:initial conditions} defines the initial conditions of the simulation.
 \subsection{Taylor-Green Vortex Flow}
+\label{sec:tgv flow}
 Taylor-Green Vortex flow is a specific solution to the incompressible Navier-Stokes equations. Chow\cite{achow} simplifies these equations for cubic vortices with a control variable $A$ and vortex frequency $a$ as shown in Equations \ref{eq:tgv_u}, \ref{eq:tgv_v}, and \ref{eq:tgv_w}. This formulation has vortex boundaries at $-\pi$ and $\pi$. The flow is plotted in Figure \ref{fig:tgv_plot}.
 \begin{align}
 u &= A cos\Big(a\Big(x + \dfrac{\pi}{2a}\Big)\Big)sin\Big(a\Big(y + \dfrac{\pi}{2a}\Big)\Big)sin\Big(a\Big(z + \dfrac{\pi}{2a}\Big)\Big) \label{eq:tgv_u}\\
@@ -590,6 +732,7 @@ w &= -2A sin\Big(a\Big(x + \dfrac{\pi}{2a}\Big)\Big)sin\Big(a\Big(y + \dfrac{\pi
 \label{fig:tgv_plot}
 \end{figure}
 \subsection{Stokes Number}
+\label{sec:stokes number}
 The Stokes Number, Stk, describes how a particle moves through a fluid. A high Stokes Number indicates an inertial regime where a particle is relatively unaffected by the fluid. A low Stokes Number indicates a viscous flow regime where the particle closely follows the fluid. A Stokes Number around 1 is in a transitional regime between viscous and inertial. This is shown in Figure \ref{fig:stokes_number}. The Stokes Number for a particle in Stokes flow is defined as in Equation \ref{eq:stokes_number}\cite{achow}.
 \\For the Taylor-Green Vortex flow used in these simulations, $l_0$ is the diameter of one of the vortices and $u_0$ is the average fluid flow speed $u_{f,avg}$. Chow\cite{achow} calculated that the average flow speed for Taylor-Green Vortex flow is $u_{f,avg} = 0.7839A$.
 \begin{equation}
@@ -603,17 +746,52 @@ Stk = \dfrac{\rho_p d_p^2 u_0}{18 \mu l_0}
 \label{fig:stokes_number}
 \end{figure}
 \subsection{Stickiness Number}
-The Stickiness Number, Sy, describes how likely particles are to stick to each other through collisions. $L_e$ is the effect length and is usually $d_e - d_b$, where $d_e$ is the effect diameter and $d_b$ is the body diameter. $k_c$ is the cohesion stiffness from equation \ref{eq:cohesion force}. $\epsilon$ is the coefficient of restitution, $u$ is the average particle speed, and $m$ is the average particle mass.
+\label{sec:stickiness number}
+The Stickiness Number, Sy, describes how likely particles are to stick to each other through collisions. $L_e$ is the effect length and is usually $d_e - d_b$, where $d_e$ is the effect diameter and $d_b$ is the body diameter. $k_c$ is the cohesion stiffness from Equation \ref{eq:cohesion force}. $\epsilon$ is the coefficient of restitution, $u$ is the average particle speed, and $m$ is the average particle mass.
 
 \begin{equation}
 Sy = \dfrac{L_e \sqrt{k_c}}{\epsilon \sqrt{L_e^2 k_c + u^2 m}}
 \end{equation}
-
-This number is derived from the analytic solution for a normal cohesive collision $<$\textit{TODO: Add section for this in appendix or verification}$>$. When the effect length is $d_e - d_b$ and $u$ is the initial collision speed, the Stickiness Number determines whether the particles will stick after the collision.
+\\This number is derived from the analytic solution for a normal cohesive collision, the full derivation can be found in Section \ref{der:stickiness number}. When the effect length is $d_e - d_b$ and $u$ is the initial collision speed, the Stickiness Number determines whether the particles will stick after the collision.
 \begin{align*}
 Sy &< 1 \textit{ Does not stick}
 \\ Sy & > 1 \textit{ Sticks}
 \end{align*}
+For the general case, lower Stickiness Numbers cause the particles to be less likely to stay together and higher Stickiness Numbers cause the particles to be more likely to stay together. Stickiness Numbers in the range $0 < Sy < 1.5$ are common, higher Stickiness Numbers are uncommon with normal parameters.
+\subsection{Simulation Properties}
+This section contains the constant properties used in the simulations. Note that, due to the long simulation durations, the timestep is only $t_{collision} / 8$. Although this is not of the highest accuracy, it does allow for longer simulations and for more data points to be collected. Absolute accuracy is not as important since the focus of these simulations is to see how agglomerates vary with different properties. A smaller timestep would be recommended if these simulations were required to predict specific outcomes of real scenarios.
+\begin{figure}[!htb]
+\centering
+\begin{tabular}{| c c |}
+\hline
+Property & Value\\
+\hline
+Gravitational Acceleration $g$ & 0 $m/s^2$ \\
+Stiffness $k_e$ & 1e5 $N/m$ \\
+Cohesion Stiffness $k_c$ & 100 $N/m$ \\
+Particle Density $\rho$ & 2000 $kg/m^3$ \\
+Particle Diameter $d_b$ & 0.05 $m$ \\
+Coefficient of Friction $\mu$ & 0.1 \\
+Friction Stiffness $k_f$ & 1e5 $N/m$ \\
+Domain Length & $2\pi$ $m$ \\
+Number of Particles $N$ & 10,000 \\
+Timestep $\Delta t$ & $t_{collision} / 8 = 0.000449$ $s$ \\
+Simulation Length & 600 $s$ \\
+\hline
+\end{tabular}
+\caption{Properties used in the Python friction sliding verification case.}
+\label{fig:simulation properties}
+\end{figure}
+\label{sec:simulation properties}
+\subsection{Initial Conditions}
+The particles are initially arranged in a cubic formation in the centre of the domain as shown in Figure \ref{fig:initial_positions}. The particles are at intervals of approximately $3d_b$. Each particle has a small random offset to avoid the results being affected by an unrealistically ordered system (this problem has been encountered in other simulations). The particles are given initial velocities with random directions and random speeds. The speeds are distributed with a mean of $1 m/s$ and standard deviation of $0.1 m/s$. The directions are evenly distributed.
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.4]{figures/initial_positions.png}
+\caption{A rendered image of the initial positions of the particles. The red spheres are the particles and the black lines are the domain boundary.}
+\label{fig:initial_positions}
+\end{figure}
+\label{sec:initial conditions}
 \section{Results}
 \textit{Presentation of results, graphs etc.}
 \section{Discussion}
@@ -794,6 +972,7 @@ The General Solution to the returning equation is the same as the incoming equat
 &\dot{x} = \sqrt{\dfrac{k_c}{m}}(d_b - d_e)sinh\Big(\sqrt{\dfrac{k_c}{m}} t\Big) + u_r cosh\Big(\sqrt{\dfrac{k_c}{m}}t\Big) \\
 \end{align*}
 \section{Stickiness Number}
+\label{der:stickiness number}
 Taking the results from section \ref{der:normal collision with cohesion} it is known that if the particle is to escape the collision the position, $x$, will at some point return to $d_e$. Thus:
 \begin{align*}
 &d_e = (d_b - d_e)cosh\Big(\sqrt{\dfrac{k_c}{m}} t\Big) + u_r \sqrt{\dfrac{m}{k_c}} sinh\Big(\sqrt{\dfrac{k_c}{m}}t\Big) + d_e \\
