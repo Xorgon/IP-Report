@@ -78,11 +78,12 @@
 \section{Project Overview}
 Simulation is an important tool in modern day engineering. It allows engineers to test designs and predict
 behaviours without requiring expensive experimental testing. Simulation is in widespread use in many key
-areas of engineering, such as fluid dynamics and structural design.
-\\\\Simulations can often be time consuming and require hours or days to complete in order to achieve acceptable accuracy. It is common to construct super-computers in order to achieve better performance, and so less time to run a simulation. However, this is often not economical or widely available. One way to improve performance without simply adding more computational power is to use Graphics Processing Units (GPUs). Unlike CPUs, GPUs run computations in parallel which can make simulations a lot faster if the same calculations are run many times.
+areas of engineering such as fluid dynamics and structural design.
+\\\\Simulations can often be time consuming and require hours or days to complete in order to achieve acceptable accuracy. It is common to construct super-computers in order to achieve better performance and faster simulations. However, this is often not economical or widely available. One way to improve performance without simply adding more computational power is to use Graphics Processing Units (GPUs). Unlike CPUs, GPUs run computations in parallel which can make simulations a lot faster if the same calculations are run many times.
 \\\\Methods used to simulate systems vary and there are many programs that offer different tools for different jobs. The method used in this project is the Discrete Element Method, a way of simulating the motion and interactions of particles.
 \\\\This project implements the Discrete Element Method using GPUs in order to analyse particle agglomeration.
 \section{Aims and Objectives}
+\label{sec:aims and objectives}
 The aim of this project is to observe how agglomerates form with varying simulation properties using a particle simulation developed with OpenCL. This can be separated into three main objectives:
 \begin{enumerate}
 \item Develop a simple particle simulation in order to understand the methodologies required for the project.
@@ -95,13 +96,12 @@ This report has three main parts. Firstly, the model being used and its numerica
 \\\\The final part is the application of the simulation to the study of how agglomerates form with varying particle properties and initial conditions. This demonstrates the capabilities of the simulation and provides some useful insights.
 \section{Previous Work}
 The project directly preceding this one was 'Programming GPU Cards with OpenCL to Predict the Motion of Billions of Particles'\cite{achow} by Andrew Chow. His project developed a parallelised particle-fluid simulator using OpenCL. Particle-particle interactions were not considered in his project. This project will expand upon his by implementing particle-particle interactions using the Discrete Element Method (explained in Chapter \ref{ch:The Discrete Element Method}).
-\\The DEM has been implemented many times since it was originally devised by Cundall in 1971\cite{cundallphd}. Improvements in the algorithm have been proposed and implemented, and it has proven to be a reliable technique.
-\\\\Many implementations have been CPU based with no parallelisation, but in recent years implementations have tended to be parallelised. The vast majority of parallel DEM implementations\cite{blazedem}\cite{GAN20161172}\cite{demcuda1}\cite{demcuda2}\cite{demcuda3} have used NVIDIA's CUDA platform which is restricted to running on NVIDIA GPUs. This means that these implementations are not usable on other hardware. One solution to this problem is to use the Open Computing Language (OpenCL). OpenCL code can be executed across heterogeneous platforms. This includes CPUs, GPUs and other, more novel, processing units. This means that an implementation programmed in OpenCL can be accessible to most users. One paper described an implementation that did use OpenCL but the application was for a real-time interactive simulation and so relatively low numbers of particles were used (16,000 was the maximum benchmarked)\cite{kinect}. Another paper briefly describes an adaptation of a simple existing implementation and its performance, however testing, decision, and implementation details are not extensive and testing was only done with $2^{17}$ (131,072) particles\cite{washizawa}.
-\\This project draws from the work of Rob Tuley whose PhD thesis\cite{tuley} outlined some of the key aspects of the DEM as well as its application in powder simulations.
+\\\\The DEM has been implemented many times since it was originally devised by Cundall in 1971\cite{cundallphd}. Many implementations have been CPU based with no parallelisation, but in recent years implementations have tended to be parallelised. The vast majority of parallel DEM implementations\cite{blazedem}\cite{GAN20161172}\cite{demcuda1}\cite{demcuda2}\cite{demcuda3} have used NVIDIA's CUDA platform which can only run on NVIDIA GPUs. These implementations are not usable on other hardware. One solution to this problem is to use the Open Computing Language (OpenCL). OpenCL code can be executed across heterogeneous platforms. This means that an implementation programmed in OpenCL can be accessible to most users. One paper described an implementation that did use OpenCL but the application was for a real-time interactive simulation and so relatively low numbers of particles were used (16,000 was the maximum benchmarked)\cite{kinect}. Another paper briefly describes an adaptation of a simple existing implementation and its performance, however the details are not extensive and testing was only done with $2^{17}$ (131,072) particles\cite{washizawa}.
+\\\\This project draws from the work of Rob Tuley whose PhD thesis\cite{tuley} outlined some key aspects of the DEM as well as its application in powder simulations.
 \chapter{The Discrete Element Method}
 \label{ch:The Discrete Element Method}
-The Discrete Element Method (DEM) is a numerical method for simulating how particles move and interact. The general principle is that individual particles of a medium are treated as separate rather than making continuum assumptions. This makes it a good method for modelling behaviours in granular materials such as sand, grain, or powder. 
-\\\\There are two main categories of particle simulation: soft models and hard models. Soft models allow for overlap and treat collisions as sustained events whereas hard models treat collisions as an instantaneous event and model forces as an impulse. Soft collision models have broader applicability as they model sustained contact and multiple simultaneous collisions as well as some other complex phenomena\cite{softvshard}. For this reason a soft contact model is used in this project.
+The Discrete Element Method (DEM) is a numerical method for simulating how particles move and interact. Individual particles of a medium are treated as separate rather than making continuum assumptions. This makes it a good method for modelling behaviours in granular materials such as sand, grain, or powder. 
+\\\\There are two main categories of particle simulation: soft and hard models. Soft models allow overlap and treat collisions as sustained events whereas hard models treat collisions as an instantaneous event with no overlap and model forces as an impulse. Soft collision models have broader applicability as they can model sustained contact and multiple simultaneous collisions\cite{softvshard}.
 \section{Particle Definition}
 The DEM can be used with arbitrary polyhedra, however for simplicity this project will only consider spherical particles as defined in figure \ref{fig:particle} where $O_p$ is the particle origin, $s_b$ is the body surface, and $s_e$ is the effect surface. The diameters of the particle body surface and particle effect surface are denoted by $d_b$ and $d_e$, respectively.
 \\\\The body surface is the surface of the particle considered to be the physical boundary, if two particles' body surfaces are touching or overlapping they are considered to be in contact. The effect surface is the surface of a particle within which cohesion effects are considered. If two particles' effect surfaces are touching or overlapping they are considered to be interacting.
@@ -115,7 +115,7 @@ The DEM can be used with arbitrary polyhedra, however for simplicity this projec
 \label{sec:DEM Forces}
 The Discrete Element Method can simulate a number of different forces using a variety of models. The merits of some of the most common models are discussed in Tuley\cite{tuley}. For this project the simplest force models have been chosen to reduce the overall complexity of the simulation.
 \subsection{Normal Contact Force}
-In a real elastic collision there will be some deformation of the particles. Calculating the deformation itself would be computationally expensive and would not be of interest in the study of particle population behaviours. The interaction can be modelled as a linear spring-dashpot arrangement where the overlap between the two particles is the compression of the spring. The damping is based on the relative velocity in the normal direction. The force is thus described by Equation \ref{eq:normal contact force} where $k_{e}$ is the collision stiffness, $\delta$ is the particle overlap, $\mathbf{\hat{n}}$ is the unit vector normal to the collision, $\eta$ is the damping coefficient, and $\mathbf{u}_{n}$ is the normal velocity.%TODO Make this clearer.
+In a real elastic collision there will be some deformation of the particles. Calculating the deformation itself would be computationally expensive and would not be of interest in the study of particle population behaviours. The interaction can be modelled as a linear spring-dashpot arrangement where the overlap between the two particles is the compression of the spring. The damping is based on the relative velocity in the normal direction. The force is thus described by Equation \ref{eq:normal contact force} where $k_{e}$ is the normal contact stiffness, $\delta$ is the particle overlap, $\mathbf{\hat{n}}$ is the unit vector normal to the collision, $\eta$ is the damping coefficient, and $\mathbf{u}_{n}$ is the normal velocity.
 \begin{equation}
 \mathbf{F}_{n} = k_{e} \delta \mathbf{\hat{n}} - \eta \mathbf{u}_{n}
 \label{eq:normal contact force}
@@ -123,7 +123,7 @@ In a real elastic collision there will be some deformation of the particles. Cal
 \subsection{Tangential Contact Force}
 \label{sec:tangential contact force}
 The tangential contact force is the friction between two particle surfaces. There are two regimes of friction force, static and dynamic. In the static regime there is no tangential motion and the friction acts to stop motion. In the dynamic regime two surfaces are sliding across one another and the friction acts to arrest this motion. The static regime usually has a higher friction coefficient than the dynamic regime. The simplest and least computationally expensive model for friction is a 'complex friction model'. This calculates values for both of the regimes and applies the minimum of the two calculations.\cite{tuley}
-\\\\Tuley\cite{tuley} mentions to common static friction models, one without damping and one with damping. These are shown in Equation \ref{eq:static friction} and Equation \ref{eq:static friction with damping} where $k_f$ is the friction stiffness, $\zeta$ is the tangential displacement during the interaction, $\mathbf{\hat{t}}$ is the unit vector tangential to the collision, $\eta$ is the damping coefficient, and $\mathbf{u}_t$ is the velocity tangential to the collision. The merit of these models is discussed in section \ref{sec:friction model}.
+\\\\Tuley\cite{tuley} mentions two common static friction models, one without damping and one with damping. These are shown in Equation \ref{eq:static friction} and Equation \ref{eq:static friction with damping} where $k_f$ is the friction stiffness, $\zeta$ is the tangential displacement during the interaction, $\mathbf{\hat{t}}$ is the unit vector tangential to the collision, $\eta$ is the damping coefficient, and $\mathbf{u}_t$ is the velocity tangential to the collision. The merit of these models is discussed in section \ref{sec:friction model}.
 \begin{equation}
 \mathbf{F}_{t}^{static} = - k_{f} \zeta \mathbf{\hat{t}}
 \label{eq:static friction}
@@ -148,8 +148,27 @@ Cohesion is the attractive force between two bodies of the same material, adhesi
 \mathbf{F}_{c} = k_{c} \delta_{e} \mathbf{\hat{n}}
 \label{eq:cohesion force}
 \end{equation}
+\subsection{Drag Force}
+\label{sec:drag force}
+Assuming low Reynolds numbers, Stokes's flow relationships can be used. This includes Stokes's drag, defined in Equation \ref{eq:drag force}, where $m$ is particle mass, $\tau_p$ is particle relaxation time, $\mathbf{u}_f$ is fluid velocity, and $\mathbf{u}$ is particle velocity. Stokes's drag applies to spheres moving through a very low Reynolds number fluid. In this situation the drag force is approximately proportional to velocity.
+\begin{equation}
+\label{eq:drag force}
+\mathbf{F}_{d} = \dfrac{m}{\tau_p} (\mathbf{u}_f - \mathbf{u})
+\end{equation}
+The particle relaxation time, $\tau_p$ is an approximate timescale describing how the particle's velocity changes in a fluid due to drag. Assuming Stokes's drag on a spherical particle, $\tau_p$ can be defined by Equation \ref{eq:particle relaxation time} where $\rho_p$ is the particle density, $d_p$ is the particle diameter, and $\mu$ is the dynamic viscosity of the fluid.
+\begin{equation}
+\label{eq:particle relaxation time}
+\tau_{p} = \dfrac{\rho_{p} d^{2}_{p}}{18 \mu}
+\end{equation}
+\subsection{Gravitational Force}
+\label{sec:gravitational force}
+The gravity force is simple and defined in Equation \ref{eq:gravitational force}.
+\begin{equation}
+\label{eq:gravitational force}
+\mathbf{F}_{g} = m \mathbf{g}
+\end{equation}
 \section{Equations of Motion}
-The motion of particles in the simulation is governed by Equation \ref{eq:acceleration}. This is derived from Newton's Second Law of motion. The total force, $\mathbf{F}$ is a combination of forces as shown in Equation \ref{eq:total force}. $\mathbf{F}_{n}$, $\mathbf{F}_{t}$, and $\mathbf{F}_{c}$ are the forces defined in section \ref{sec:DEM Forces}. $\mathbf{F}_{g}$ and $\mathbf{F}_{d}$ are the gravitational force and drag force, respectively, and are defined in section \ref{sec:drag and gravity}.
+The motion of particles in the simulation is governed by Equation \ref{eq:acceleration}. This is derived from Newton's Second Law of motion. The total force, $\mathbf{F}$ is a combination of forces as shown in Equation \ref{eq:total force}. $\mathbf{F}_{n}$, $\mathbf{F}_{t}$, $\mathbf{F}_{c}$, $\mathbf{F}_{g}$, and $\mathbf{F}_{d}$ are the forces defined in section \ref{sec:DEM Forces}.
 \begin{equation}
 \dfrac{d\mathbf{x}}{dt} = \mathbf{u}
 \label{eq:position}
@@ -162,26 +181,10 @@ The motion of particles in the simulation is governed by Equation \ref{eq:accele
 \mathbf{F} = \mathbf{F}_{n} + \mathbf{F}_{t} + \mathbf{F}_{c} + \mathbf{F}_{g} + \mathbf{F}_{d}
 \label{eq:total force}
 \end{equation}
-\subsection{Drag and Gravitational Forces}
-\label{sec:drag and gravity}
-Assuming low Reynolds numbers, Stokes's flow relationships can be used. This includes Stokes's drag, defined in Equation \ref{eq:drag force}, where $m$ is particle mass, $\tau_p$ is particle relaxation time, $\mathbf{u}_f$ is fluid velocity, and $\mathbf{u}$ is particle velocity. Stokes's drag applies to spheres moving through a very low Reynolds number fluid. In this situation the drag force is approximately proportional to velocity.
-\begin{equation}
-\label{eq:drag force}
-\mathbf{F}_{d} = \dfrac{m}{\tau_p} (\mathbf{u}_f - \mathbf{u})
-\end{equation}
-The particle relaxation time, $\tau_p$ is an approximate timescale describing how the particle's velocity changes in a fluid due to drag. Assuming Stokes's drag on a spherical particle, $\tau_p$ can be defined by Equation \ref{eq:particle relaxation time} where $\rho_p$ is the particle density, $d_p$ is the particle diameter, and $\mu$ is the dynamic viscosity of the fluid.
-\begin{equation}
-\label{eq:particle relaxation time}
-\tau_{p} = \dfrac{\rho_{p} d^{2}_{p}}{18 \mu}
-\end{equation}
-The gravity force is simple and defined in Equation \ref{eq:gravitational force}.
-\begin{equation}
-\label{eq:gravitational force}
-\mathbf{F}_{g} = m \mathbf{g}
-\end{equation}
 \section{Useful Results}
 \subsection{Reduced Mass}
-When considering the motion of two particles relative to each other a useful property is the reduced mass. Consider the relative acceleration of two particles in a collision. To determine the relative acceleration between the two particles, the two accelerations must be combined. It is known that $F_1$ and $F_2$ are equal and opposite. Finding the relative acceleration results in Equation \ref{eq:relative acceleration}. This provides a relationship between the force in a collision and the relative acceleration as a result of that collision. It is of a similar form as Newton's Second Law but with the usual mass replaced with the reduced mass of the two particles (Equation \ref{eq:reduced mass}). This reduced mass can be used instead of particle mass in Equation \ref{eq:acceleration} when considering relative motion of particles.
+When considering the motion of two particles relative to each other a useful property is the reduced mass. The reduced mass is an equivalent combined mass of two particles when calculating relative motion between them. Equation \ref{eq:relative acceleration} shows how the reduced mass is used instead of a single particle mass when relating the force in a collision to the relative acceleration between the particles.
+\\\\The reduced mass is derived from the relative acceleration of two particles in a collision. To determine the relative acceleration between the two particles, the two accelerations must be combined. It is known that $F_1$ and $F_2$ are equal and opposite. Finding the relative acceleration results in Equation \ref{eq:relative acceleration}. It is of a similar form as Newton's Second Law but with the usual mass replaced with the reduced mass of the two particles (Equation \ref{eq:reduced mass}). This reduced mass can be used instead of particle mass in Equation \ref{eq:acceleration} when considering relative motion of particles.
 \begin{align}
 F_1 &= m_1 a_1 \nonumber \text{, } F_2 = m_2 a_2 \nonumber
 \\F_1 &= -F_2 \nonumber
@@ -195,7 +198,7 @@ F_1 &= m_1 a_1 \nonumber \text{, } F_2 = m_2 a_2 \nonumber
 It should be noted that Equation \ref{eq:reduced mass} reduces to $m_1$ if $m_2$ tends to infinity. This is useful when considering static particles with infinite density and is used extensively for verifying simulation results (see section \ref{sec:verification}).
 \subsection{Collision Duration}
 \label{sec:collision duration}
-The collision duration is the time it takes for a collision to occur. This is important because if the simulation timestep is not low enough there will not be enough steps within a collision to produce accurate results. The collision duration is fully derived in section \ref{der:collision duration} and is calculated using Equation \ref{eq:collision duration}. The collision duration is often simplified to Equation \ref{eq:simplified collision duration}.
+The collision duration is the time it takes for a collision to occur. This is important because if the simulation timestep is not low enough there will not be enough steps within a collision to produce accurate results. The collision duration is fully derived in Section \ref{der:collision duration} and is calculated using Equation \ref{eq:collision duration}. The collision duration is often simplified to Equation \ref{eq:simplified collision duration}.
 \begin{equation}
 t_{col} = \sqrt{\dfrac{m}{k_e}}\sqrt{\pi^2 + ln(\epsilon)^2}
 \label{eq:collision duration}
@@ -205,16 +208,16 @@ t_{col} = \pi \sqrt{\dfrac{m}{k_e}}
 \label{eq:simplified collision duration}
 \end{equation}
 \subsection{Coefficient of Restitution}
-The coefficient of restitution is ratio of speed before and after a collision. For a damped collision the coefficient of restitution is between 0 and 1. The coefficient of restitution for a normal collision is fully derived in Appendix \ref{ch:Derivations} and is related to the damping coefficient, $\eta$, by Equation \ref{eq:damping coefficient}. This is derived in section \ref{der:coefficient of restitution}.
+The coefficient of restitution is the ratio of speed before and after a collision. For a damped collision the coefficient of restitution is between 0 and 1. The coefficient of restitution for a normal collision is fully derived in Section \ref{der:coefficient of restitution} and is related to the damping coefficient, $\eta$, by Equation \ref{eq:damping coefficient}.
 \begin{equation}
 \eta = - 2 ln(\epsilon) \sqrt{\dfrac{m k_e}{\pi^2 + ln(\epsilon)^2}}
 \label{eq:damping coefficient}
 \end{equation}
 \section{Particle Rotation}
-For arbitrary polyhedral particles rotation can be important since the particles will collide at different angles and it can make a significant difference to the result. With spherical particles this is less important since the collision geometry is always the same. Spherical particles can rearrange easier if rotation is considered but reasonably accurate results can still be obtained without implementing rotation. The aim of this project is to analyse how agglomerates form with a change in simulation properties so having fully accurate results is not necessary as long as the changes in behaviour can be captured.
+For arbitrary polyhedral particles rotation can be important since the particles will collide at different angles and it can make a significant difference to the result. With spherical particles this is less important since the collision geometry is always the same. Spherical particles can rearrange more easily if rotation is considered but reasonably accurate results can still be obtained without implementing rotation. The aim of this project is to analyse how agglomerates form with a change in simulation properties so having fully accurate results is not necessary as long as the changes in behaviour can be captured.
 \section{Collision Detection}
 \label{sec:collision detection}
-A key part of the DEM is effective collision detection. If approached naively collision detection is simply calculating the overlap for every particle with every other particle. This is extremely inefficient and causes the simulation to run in $O(N^2)$ time, where $N$ is the number of particles. To improve efficiency this process can be split into two phases. Firstly, the broad phase determines which particles could collide with which other particles. This reduces the number of particle collisions that have to be calculated. The second phase, collision resolution, resolves the collisions by measuring overlap. The goal of the broad phase is to allow the simulation to run in $O(N)$ time. Figure \ref{fig:algorithm_flowchart} shows the basic simulation loop and the different simulation phases.
+A key part of the DEM is effective collision detection. If approached naively collision detection is simply calculating the overlap for every particle with every other particle. This is extremely inefficient and causes the simulation to run in $O(N^2)$ time, where $N$ is the number of particles. To improve efficiency this process can be split into two phases. Firstly, the broad phase collision detection determines which particles \textit{could} collide with which other particles. This reduces the number of particle collisions that have to be resolved. The second phase, collision resolution, resolves the collisions by measuring overlap and then calculating forces if necessary. The goal of the broad phase is to allow the simulation to run in $O(N)$ time. Figure \ref{fig:algorithm_flowchart} shows the basic simulation loop and the different simulation phases.
 \\\\There are many different algorithms that can be used for broad phase collision detection, varying in complexity and efficiency. Although some of the more complex algorithms were considered, the gain in efficiency was not significant enough to outweigh the significant increase in implementation complexity. For this reason the simplest algorithm, spatial zoning, has been chosen for this project.
 \\\\Spatial zoning separates the simulation domain into control volumes. Particles are then sorted into the control volumes. Particles in neighbouring, or the same, control volumes are then resolved fully. It is most efficient to have the control volumes as small as possible because this reduces the number of particles in neighbouring control volumes. Control volumes must be at least as large as the largest particle in the simulation to ensure that neighbouring control volumes contain all possible collisions. For monodisperse particle populations this means that the control volumes should be the same size as the particles. For polydisperse particle populations this means that the control volumes should be the size of the largest particle in the population. As mentioned in Tuley\cite{tuley} this can decrease efficiency for particle populations with a large range of sizes. Sections \ref{sec:Python Collision Detection} and \ref{sec:OpenCL Collision Detection} provide further detail as to how this is implemented computationally in Python and with OpenCL, respectively.
 \begin{figure}[!htb]
@@ -242,7 +245,7 @@ u_{n+1} = u_{n} + \dfrac{F(u_n)}{m}\Delta t
 u_{n+1} = u_{n} + \dfrac{F(u_{n+1})}{m}\Delta t
 \label{eq:Backward Euler Acceleration}
 \end{equation}
-For the DEM the total force is a combination of forces (see Equation \ref{eq:total force}). Drag and gravity forces are only calculated once per iteration and so can be calculated at the same time as the velocity. However, collision forces are calculated multiple times per iteration to get contributions from all collisions and so cannot be easily calculated at the same time as the velocity. For this reason, the normal force, tangential force, and cohesion force are treated as fixed at the time of velocity calculation. Gravity is also fixed and so Equation \ref{eq:total force} can be represented as in Equations \ref{eq:force at iteration} and \ref{eq:fixed force plus}. $F(u)$ can then be used in Equation \ref{eq:Forward Euler Acceleration} or \ref{eq:Backward Euler Acceleration}.
+For the DEM the total force is a combination of forces (see Equation \ref{eq:total force}). Drag and gravity forces are only calculated once per iteration and so can be calculated at the same time as the velocity. However, collision forces are calculated multiple times per iteration to get contributions from all collisions and so cannot be easily calculated at the same time as the velocity. For this reason, the normal force, tangential force, and cohesion force are treated as fixed at the time of velocity calculation. Gravity is also fixed so Equation \ref{eq:total force} can be represented as in Equations \ref{eq:force at iteration} and \ref{eq:fixed force plus}. $F(u)$ can then be used in Equation \ref{eq:Forward Euler Acceleration} or \ref{eq:Backward Euler Acceleration}.
 \begin{align}
 F(u) &= F_n + F_t + F_c + F_g + F_d(u)
 \label{eq:force at iteration} \\
@@ -276,8 +279,8 @@ x_{n+1} = x_n + \dfrac{u_n + u_{n+1}}{2}\Delta t
 \subsection{Comparison of Integration Schemes}
 \label{sec:integration scheme comparison}
 This analysis was performed using the Python implementation discussed in Chapter \ref{ch:Python Implementation}.
-\\Figure \ref{fig:terminal_velocity_implicit_explicit} shows the speed of a particle in a fluid starting from rest and accelerating to the fluid velocity. It shows that the explicit velocity equation (Equation \ref{eq:explicit next velocity}) over-estimates the speed and the implicit velocity equation (Equation \ref{eq:implicit next velocity}) under-estimates the speed. The error in the implicit result is less than the error in the explicit result.
-\\\\Figure \ref{fig:avg_percent_diff_against_timestep} shows the average percentage difference between each numerical method and the analytic solution for varying timestep. This shows that the explicit method is exactly first order accurate whereas the implicit result is a bit higher than first order accurate. This means that it is better to use the implicit method than the explicit method.
+\\\\Figure \ref{fig:terminal_velocity_implicit_explicit} shows the speed of a particle in a fluid starting from rest and accelerating to the fluid velocity. It shows that the explicit velocity equation (Equation \ref{eq:explicit next velocity}) over-estimates the speed and the implicit velocity equation (Equation \ref{eq:implicit next velocity}) under-estimates the speed. The error in the implicit result is less than the error in the explicit result.
+\\\\Figure \ref{fig:avg_percent_diff_against_timestep} shows the average percentage difference between each numerical method and the analytic solution for varying timestep. This shows that the explicit method is exactly first order accurate whereas the implicit result is slightly higher than first order accurate. This means that it is better to use the implicit method than the explicit method.
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.6]{figures/TerminalVelocityImplicitExplicit.png}
@@ -303,7 +306,7 @@ Removing the static friction part of the model entirely is tempting, it would si
 \end{figure}
 \subsection{Static Friction Without Damping}
 Two methods were considered for calculating the tangential displacement, $\zeta$. The first was to simply estimate how far the particle moved in a timestep by multiplying the tangential velocity by the timestep. This method does not work because as the timestep decreases the static friction decreases and the error increases. This effect is demonstrated in Figure \ref{fig:delta_t_static}.
-\\\\The alternative method was to estimate $\zeta$ by multiplying the tangential velocity by a the collision duration (see Section \ref{sec:collision duration}). The results for this model are shown in Figure \ref{fig:t_col_static}. This provides far more accurate results and solves both the instability problem from the dynamic model and the underestimation problem from the timestep based static friction model.
+\\\\The alternative method was to estimate $\zeta$ by multiplying the tangential velocity by the collision duration (see Section \ref{sec:collision duration}). The results for this model are shown in Figure \ref{fig:t_col_static}. This provides far more accurate results and solves both the instability problem from the dynamic model and the underestimation problem from the timestep based static friction model.
 \begin{figure}[!ht]
 \centering
 \includegraphics[scale=0.5]{figures/friction_model/delta_t_static.png}
@@ -323,8 +326,8 @@ A series of verification test cases have been developed in order to assess the a
 \label{sec:verification}
 \subsection{Drag}
 \label{sec:drag verification}
-The drag verification case is a particle in a fluid. The fluid has a constant velocity in the x direction denoted $u_f$. There is no gravity and no other particles are present. The particle accelerates to the speed of the fluid.
-\\The position and velocity of the particle are determined by Equations \ref{eq:drag position} and \ref{eq:drag velocity}, respectively. These equations are derived in section \ref{der:drag}.
+The drag verification case is a particle in a fluid. The fluid has a constant velocity in the x direction denoted by $u_f$. There is no gravity and no other particles are present. The particle accelerates to the speed of the fluid.
+\\The position and velocity of the particle are determined by Equations \ref{eq:drag position} and \ref{eq:drag velocity}, respectively. These equations are derived in Section \ref{der:drag}.
 \begin{align}
 &x = u_f \tau (e^{-t/\tau} - 1) + u_f t \label{eq:drag position} \\
 &\dot{x} = u_f (1 - e^{-t/\tau}) \label{eq:drag velocity} \\
@@ -383,21 +386,20 @@ The cohesion collision verification case is very similar to the normal collision
 \chapter{Python Implementation}
 \label{ch:Python Implementation}
 \section{Overview}
-An initial implementation of the Discrete Element Method has been done in Python. The objective of this implementation is to gain an understanding of the DEM and any inherent computational difficulties. Python has been chosen as a testing environment for its simplicity and ease of development. The code for the Python implementation can be found in the DEMApples GitHub repository\cite{DEMApples}.
+An initial implementation of the DEM has been developed in Python. The objective of this implementation is to gain an understanding of the DEM and any inherent computational difficulties. Python has been chosen as a testing environment for its simplicity and ease of development. The code for the Python implementation can be found in the DEMApples GitHub repository\cite{DEMApples}.
 \section{Program Structure}
 \subsection{Element Types}
-Different element types are required for different types of geometry and particle. For the Python implementation the two simplest have been chosen, a spherical particle and an axis-aligned wall. Python allows for object oriented programming which makes keeping track of everything very easy. Objects have been used extensively throughout the Python implementation.
+Different element types are required for different types of geometry and particle. For the Python implementation the two simplest have been chosen, a spherical particle and an axis-aligned wall. Python allows for object oriented programming which makes element tracking easier.
 \subsubsection{Particle}
-The basic particle element is a spherical particle with pre-determined properties. All of these properties can be set upon instantiation of each particle object and so can be easily modified for a variety of different simulations.
+The basic particle element is a spherical particle with pre-determined properties. All of these properties can be set upon instantiation of each particle object and so can be easily modified for different simulations.
 \\There are two objects for particles, the main object, 'Particle', tracks a full particle state history which is very memory intensive and unnecessary for most applications. The second object, 'LowMemParticle', inherits from 'Particle' and only keeps track of the current state and, during iteration, one future state.
-\\The particle is iterated using the function call 'Particle.iterate()'. This passes a $\Delta t$ to the particle object and iterates the velocity and position. The iterative functions used are discussed in Chapter \ref{ch:Numerical Methods}.
 \subsubsection{Axis-Aligned Simple Wall}
-The basic wall element is an axis-aligned simple wall. This object is defined by two points, minimum and maximum, that must lie in the same plane. From them a rectangle is formed. A normal is calculated for the wall and stored in the object to save time in collision calculations. The wall is treated as fixed, eliminating the need for complex material properties or calculation of motion. An axis-aligned wall has been chosen because it eliminates a lot of the complex calculations required when calculating arbitrary planar geometry. Non-axis-aligned geometry, such as a slope, can still be used in simulations by having gravity act along different vectors. This has been used in `gravity\_shift\_closed\_box.py' simulation.
+The basic wall element is an axis-aligned simple wall. This object is defined by two points, minimum and maximum, that must lie in the same plane. From them a rectangle is formed. A normal is calculated for the wall and stored in the object to save time in collision calculations. The wall is treated as fixed, eliminating the need for complex material properties or calculation of motion. An axis-aligned wall has been chosen because it eliminates a lot of the complex calculations required when calculating arbitrary planar geometry. Non-axis-aligned geometry, such as a slope, can still be used in simulations by having gravity act along different vectors. This has been used in `gravity\_shift\_closed\_box.py' simulation\cite{DEMApples}.
 \subsection{Collisions}
 \subsubsection{Collision Detection}
 \label{sec:Python Collision Detection}
-Broad phase collision detection uses the simple spatial zoning technique from section \ref{sec:collision detection}. This approach has been chosen because it is quick and simple to implement. Other options (such as triangulation\cite{dynamictriangulations}) were considered for this implementation but the benefits of using them were far outweighed by their complexity. Since the initial Python implementation will not be fast anyway it was not deemed necessary to implement optimised algorithms at this stage.
-\\\\The domain is represented by a three dimensional array where each entry is a control volume. The control volume is a list of particles in its bounds. The global list of particles is iterated over and each particle assigns itself to the correct control volume. This results in a three dimensional array where each control volume has all of the particles within its bounds as an array. Collision objects are then created for each pair of particles in the same, or neighbouring, control volumes. This approach reduces the problem from $O(N^{2})$ to almost $O(N)$ as shown in figure \ref{fig:run_time_against_N_python}.
+Broad phase collision detection uses the simple spatial zoning technique from Section \ref{sec:collision detection}. This approach has been chosen because it is quick and simple to implement. Other options (such as triangulation\cite{dynamictriangulations}) were considered for this implementation but the benefits of using them were far outweighed by their complexity. Since the initial Python implementation will not be fast anyway it was not deemed necessary to implement optimised algorithms at this stage.
+\\\\The domain is represented by a three-dimensional array where each entry is a control volume. The control volume has a list of particles in its bounds. The global list of particles is iterated over and each particle assigns itself to the correct control volume. This results in a three-dimensional array where each control volume has all of the particles within its bounds as an array. Collision objects are then created for each pair of particles in the same, or neighbouring, control volumes. This approach reduces the problem from $O(N^{2})$ to almost $O(N)$ as shown in figure \ref{fig:run_time_against_N_python}.
 \begin{figure}[!ht]
 \centering
 \includegraphics[scale=0.65]{figures/RunTimeAgainstNumberOfParticlesPython.png}
@@ -412,15 +414,15 @@ The mathematics for how the forces are calculated can be found in Section \ref{c
 \subsubsection{Drag}
 To determine drag a flow velocity must be calculated. In this implementation it is calculated using a function that is passed into the Particle object upon instantiation. This allows a variety of flow field functions to be used without modifying the Particle object code. The default for this function is a perfectly stationary flow.
 \subsubsection{Gravity}
-A gravity function can also be passed into the Particle object upon instantiation. Although this defaults to a simple -9.81$ms^{-2}$ in the negative z direction, it can be chosen to simulate a rotating frame of reference or other complex configurations. A rotating frame of reference has been implemented in the `gravity\_shift\_closed\_box' example simulation\cite{DEMApples}.
+A gravity function can also be passed into the Particle object upon instantiation. Although this defaults to a simple -9.81$ms^{-2}$ in the z direction, it can be chosen to simulate a rotating frame of reference or other complex configurations. A rotating frame of reference has been implemented in the `gravity\_shift\_closed\_box' example simulation\cite{DEMApples}.
 \subsubsection{DEM Forces}
 The DEM forces that are calculated in collisions are stored in an array within the Particle object. When the particle is iterated the array is summed and used in the iteration calculation. After this calculation the array is cleared so that forces do not get incorrectly added multiple times. This configuration makes it simple to add and remove forces to the simulation whenever necessary and could also be used in general to add any force to the particle.
 \section{Verification}
 \label{sec:Python verification}
 This section contains the results of the verification cases from Section \ref{sec:verification} for the Python implementation. The graphs in this section compare the results of simulations against the analytic solutions. Overall, the results show that the simulation is suitably accurate and as timestep decreases the simulation accuracy increases, as expected.
 \subsection{Drag}
-This is the drag verification case from Section \ref{sec:drag verification}. The properties used are in Figure \ref{fig:python drag properties} and the results are shown in Figure \ref{fig:python_drag_verification}. The results show that the simulation results closely match the analytic solution and that the error decreases as the timestep decreases.
-\begin{figure}[!htb]
+This is the drag verification case from Section \ref{sec:drag verification}. The properties used are in Table \ref{tab:python drag properties} and the results are shown in Figure \ref{fig:python_drag_verification}. The results show that the simulation results closely match the analytic solution and that the error decreases as the timestep decreases.
+\begin{table}[!htb]
 \centering
 \begin{tabular}{| c c |}
 \hline
@@ -433,8 +435,8 @@ $x$ Fluid Velocity $u_f$ & 1 $m/s$ \\
 \hline
 \end{tabular}
 \caption{Properties used in the Python drag verification case.}
-\label{fig:python drag properties}
-\end{figure}
+\label{tab:python drag properties}
+\end{table}
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.5]{figures/opencl_verification/drag_verification.png}
@@ -442,8 +444,8 @@ $x$ Fluid Velocity $u_f$ & 1 $m/s$ \\
 \label{fig:python_drag_verification}
 \end{figure}
 \subsection{Normal Collision}
-This is the normal collision verification case from Section \ref{sec:normal collision verification}. The properties used are in Figure \ref{fig:python normal collision properties} and the results are shown in Figure \ref{fig:python_normal_force_verification}. The results show that the simulation results closely match the analytic solution and that the error decreases as the timestep decreases.
-\begin{figure}[!htb]
+This is the normal collision verification case from Section \ref{sec:normal collision verification}. The properties used are in Table \ref{tab:python normal collision properties} and the results are shown in Figure \ref{fig:python_normal_force_verification}. The results show that the simulation results closely match the analytic solution and that the error decreases as the timestep decreases.
+\begin{table}[!htb]
 \centering
 \begin{tabular}{| c c |}
 \hline
@@ -457,8 +459,8 @@ Particle Diameter $d_b$ & 0.1 $m$ \\
 \hline
 \end{tabular}
 \caption{Properties used in the Python normal collision verification case.}
-\label{fig:python normal collision properties}
-\end{figure}
+\label{tab:python normal collision properties}
+\end{table}
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.5]{figures/python_verification/normal_force_verification.png}
@@ -466,8 +468,8 @@ Particle Diameter $d_b$ & 0.1 $m$ \\
 \label{fig:python_normal_force_verification}
 \end{figure}
 \subsection{Friction Sliding}
-This is the normal collision verification case from Section \ref{sec:friction sliding verification}. The properties used are in Figure \ref{fig:python friction sliding properties} and the results are shown in Figure \ref{fig:python_friction_verification}. The results show that the simulation results closely match the analytic solution. The error does decrease as the timestep decreases but there is no clear evidence that it does so in a predictable way.
-\begin{figure}[!htb]
+This is the normal collision verification case from Section \ref{sec:friction sliding verification}. The properties used are in Table \ref{tab:python friction sliding properties} and the results are shown in Figure \ref{fig:python_friction_verification}. The results show that the simulation results closely match the analytic solution. The error does decrease as the timestep decreases but there is no clear evidence that it does so in a predictable way.
+\begin{table}[!htb]
 \centering
 \begin{tabular}{| c c |}
 \hline
@@ -485,8 +487,8 @@ Friction Stiffness $k_f$ & 1e8 $N/m$ \\
 \hline
 \end{tabular}
 \caption{Properties used in the Python friction sliding verification case.}
-\label{fig:python friction sliding properties}
-\end{figure}
+\label{tab:python friction sliding properties}
+\end{table}
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.4]{figures/python_verification/friction_verification.png}
@@ -497,9 +499,9 @@ Friction Stiffness $k_f$ & 1e8 $N/m$ \\
 \chapter{OpenCL Implementation}
 \label{ch:OpenCL Implementation}
 \section{OpenCL and Graphics Processing Units}
-The main computational device in a computer is the Central Processing Unit (CPU). The CPU takes a series of instructions and calculates pretty much anything that a computer requires. For most applications this is ideal as they require a sequence of different instructions to be executed to achieve their goal. However, for some applications this is inefficient. The most common occurrence of this is in graphics. Graphics requires the same calculations to be performed a very large number of times to render images. To run this on a CPU would take a long time because it would all run in sequence. To speed up this process Graphics Processing Units (GPUs) were developed. GPUs run the same operation many times in parallel rather than different operations in series. Individual GPU computation cores are slower than CPU cores but for graphics this is fine as the gains from running everything in parallel are massive.
-\\\\Originally this was applied to graphics but more recently has been used to do scientific calculations where the same operation is repeated across a lot of data. In order to facilitate this languages have been developed to allow a developer to easily run calculations on GPUs. The two most common such languages are CUDA and OpenCL. CUDA is NVIDIA's language that is specifically designed for NVIDIA GPUs. OpenCL is an open standard maintained by the Khronos group, a consortium of companies dedicated to open standard graphics and parallel computing interfaces. OpenCL allows a developer to write programs for a variety of devices (e.g. GPUs, CPUs, and FPGAs) without having to modify the code.
-\\\\There are two main parts of an OpenCL program, the host code and the device code. The host is whatever computer system is being used, usually a CPU, some memory, a storage device, and other standard elements. The device is whatever processing unit is being used to run the main calculations. Often the device would be a GPU or other, more novel, processing units. The host runs setup, memory handling, and other miscellaneous processing tasks. The device is then passed kernels to run on a group of data.
+The main computational device in a computer is the Central Processing Unit (CPU). The CPU takes a series of instructions and calculates pretty much anything that a computer requires. For most applications this is ideal as they require a sequence of different instructions to be executed to achieve their goal. However, for some applications this is inefficient. The most common occurrence of this is in graphics. Graphics require the same calculations to be performed a very large number of times to render images. To run this on a CPU would take a long time because it would all run in sequence. To speed up this process Graphics Processing Units (GPUs) were developed. GPUs run the same operation many times in parallel rather than different operations in series. Individual GPU computation cores are slower than CPU cores but for graphics this is fine as the gains from running everything in parallel are massive.
+\\\\Originally this was applied to graphics but more recently has been used to do scientific calculations where the same operation is repeated across a lot of data. In order to facilitate this languages have been developed to allow a developer to easily run calculations on GPUs. The two most common such languages are CUDA and OpenCL. CUDA is NVIDIA's language that is specifically designed for NVIDIA GPUs. OpenCL is an open standard maintained by the Khronos group, a consortium of companies dedicated to open standard graphics and parallel computing interfaces. OpenCL allows a developer to write programs for a variety of devices (e.g. GPUs, CPUs, and FPGAs) without having to modify the code. This makes OpenCL code highly portable and reusable. For this reason OpenCL has been chosen for use in this project.
+\\\\There are two main parts of an OpenCL program, the host code and the device code. The host is whatever computer system is being used, usually a CPU, some memory, a storage device, and other standard elements. The device is whatever processing unit is being used to run the main calculations. In this project the device is the GPU. The host runs setup, memory handling, and other miscellaneous processing tasks. The device is then passed kernels to run on a group of data.
 \section{Overview}
 The main DEM implementation used in this project uses OpenCL to run on a GPU. The host code is written in C to simplify writing code for both the host and the device. More features are available in C++, however only OpenCL 2.1 has C++ kernel support and NVIDIA only supports up to OpenCL 1.2. Since one goal of using OpenCL is to allow the code to be used on multiple platforms, it does not make sense to use OpenCL 2.1.
 \\A lot of the OpenCL utility functions used in this implementation are based on code from the previous project\cite{achow}. These functions allow for easy implementation of code without having to repeat long OpenCL function calls.
@@ -516,16 +518,16 @@ The `aa\_wall' structure simply contains the minimum, maximum, and normal vector
 There are two collision structures: `pp\_collision' for particle-particle collisions and `pw\_collision' for particle-wall collisions. The structures only contain the two relevant IDs. The collision structures are not aligned to the nearest 128 bytes of memory as this would waste almost all of the memory and there can be many collisions.
 \\The only notable difference between the particle-particle collision structure and the particle-wall collision structure is that the particle-particle collision structure contains data that tracks whether a collision is across a periodic boundary.
 \subsubsection{Buffers}
-To access the data from the device it must be passed into a buffer. None of the structure data is passed into the buffer so the device must have a copy of the definition of the structure. This is problematic as the host and device have different compilers. To work around this problem the host and device structures are written with members in descending order of size. This encourages the compiler to order them correctly.
-\\In addition, when using the MSVC compiler, padding must be added to ensure correct alignment. This padding is not required when using gcc compilers. 
-\\The alignment attribute specifier is also not the same between different compilers so ``if defined'' statements are implemented for both MSVC and gcc compilers to allow the code to be compiled on either without modification.
+To access the data from the device it must be passed into a buffer. None of the structure data is passed into the buffer so the device must have a copy of the definition of the structure. This is problematic as the host and device have different compilers. To work around this problem the host and device structures are written with members in descending order of size. This encourages the compiler to order them correctly in memory.
+\\\\In addition, when using the MSVC compiler, padding must be added to ensure correct alignment. This padding is not required when using gcc compilers. 
+\\\\The alignment attribute specifier is also not the same between different compilers so ``if defined'' statements are implemented for both MSVC and gcc compilers to allow the code to be compiled on either without modification.
 \subsection{Kernels}
 The main calculations for this implementation are performed on the device. This means that the program must be separated into kernels to be passed over sets of data. There are three main sets of kernels: collision detection, collision resolution, and particle iteration.
 \subsubsection{Collision Detection}
 \label{sec:OpenCL Collision Detection}
-To improve efficiency, in both speed and resource usage, performing naive collision detection is not viable for large numbers of particles. To improve on this the spatial zoning technique is used similar to the initial Python implementation. However, C does not make arrays of varying sizes easy or efficient so the data structures used and the algorithm implementation must be significantly different.
+To improve efficiency, in both speed and resource usage, performing naive collision detection is not viable for large numbers of particles. To improve on this the spatial zoning technique is used, similar to the initial Python implementation. However, C does not make arrays of varying sizes easy or efficient so the data structures used and the algorithm implementation must be significantly different.
 \\\\The basic problem is how to store control volumes as lists of references to particles. In Python this was easy, a simple 3D array of control volumes with lists of particle objects inside was sufficient. Various approaches to solving this problem were considered. One approach was to encode particle IDs (equal to the index of a particle in the particles array) with a hashing function into a single number that could be turned back into particle IDs on the device. However, this approach was infeasible because the numbers would get so large that they could not be stored accurately or efficiently.
-\\\\The approach used is to have multiple passes of assignment of particles to control volumes. The first pass simply counts how many particles are in each control volume. This is stored in a one dimensional array of control volumes represented by integers of how many particles each contains. From this array another array is created. This array is of all the particle IDs but sorted into control volumes. The control volumes are of lengths defined by the count array and start at indexes stored in a third array. If a control volume has no particles, the start index of the array is set to -1. For the unsigned long data type this overflows to the maximum value (approximately 4.3 billion) which will likely never be used to index particles. This arrangement of arrays is shown in Figure \ref{fig:cv_array_structure}.
+\\\\The approach used is to have multiple passes of assignment of particles to control volumes. The first pass simply counts how many particles are in each control volume so that appropriately sized arrays can be created before the data must be added. This is stored in a one dimensional array of control volumes represented by integers of how many particles each contains. From this array another array is created. This array is of all the particle IDs but sorted into control volumes. The control volumes are of lengths defined by the count array and start at indexes stored in a third array. If a control volume has no particles, the start index of the array is set to -1. For the unsigned long data type this overflows to the maximum value (approximately 4.3 billion) which will never be used to index particles. This arrangement of arrays is shown in Figure \ref{fig:cv_array_structure}.
 \\\\This approach is somewhat similar to how memory is handled on a computer, but using indexes instead of pointers. For an entirely host-side method an array of pointers to arrays of particles could be used, but this would not be sensible when dealing with device memory as each array would need to be moved to the device before use. Having three arrays that hold all the necessary properties simplifies the memory buffer process significantly. The maths required for turning positions and control volume coordinates into indexes in these arrays are contained in cvUtils.c and kernelUtils.cl for host and device, respectively.
 \begin{figure}[!ht]
 \centering
@@ -533,39 +535,17 @@ To improve efficiency, in both speed and resource usage, performing naive collis
 \caption{Diagram showing the structure and relationship between arrays representing Control Volumes.}
 \label{fig:cv_array_structure}
 \end{figure}
-\\One weakness of this approach is that the CV start index array is generated sequentially. A solution to this weakness could be to have each control volume add up the number of particles in all preceding control volumes in order to determine its own start index in the sorted particle array. However, this would repeat a lot of maths and could end up being slower. The function consists of adding to the start index count and then assigning the count to memory in the CV start index array. If it were to be done in parallel, the adding would have to be repeated for each CV but the memory assignment would be done in parallel. Thus, whether it would be faster sequentially or in parallel depends on which operation is slower. Although interesting, this not a significant performance problem and so has been left as it is.
-
+\\One weakness of this approach is that the CV start index array is generated sequentially. This could be done in parallel but would be more complicated and would still need to count in sequence. Although interesting, this not a significant performance problem and so has been left as it is.
 \subsubsection{Collision Resolution}
 \label{sec:Collision Resolution}
 The collision resolution kernel is actually separated into multiple kernels for different types of collision (particle-particle and particle-wall) however the behaviour of these kernels is almost identical. For this discussion we will use the particle-particle kernel as an example. The kernel takes a pointer to an array of collision structures and a pointer to the array of particles. The DEM collision force calculations are run for each collision and the forces are added to the DEM forces vector in the relevant particle structures. This approach has been chosen because it is easier to sum the forces as they are calculated rather than attempt to predict the length of the necessary force array to store each force separately as in the Python implementation.
-\\\\This approach causes a serious problem as it is possible that multiple collision kernels will need to write data to the same particle at the same time. The solution to this is to use the atomic operations available in OpenCL. Unfortunately, OpenCL only natively supports full atomic operations for int and unsigned int data types. OpenCL does support an exchange atomic operator for single precision floats, but this is not the best approach for doing atomic arithmetic for floats.
-\\\\An approach for doing atomic addition (as is necessary in this case) is recommended in an online article\cite{atomic_addition}.
-The code is shown in Figure \ref{fig:atomic_float_addition}. This approach uses the comparison exchange atomic operator by creating a union of the floats with unsigned ints. This works well because the bits being exchanged are the same for the float and unsigned int and actual atomic arithmetic is not necessary so the difference between the data types does not matter. Thus the new value is calculated and if the value used to calculate it has changed in that time the calculation is repeated with the updated value.
-\begin{figure}[!ht]
-\begin{lstlisting}[language=C]
- _INLINE_ void atomicAdd_g_f(volatile __global float *addr, float val)
-   {
-       union{
-           unsigned int u32;
-           float        f32;
-       } next, expected, current;
-   	current.f32    = *addr;
-       do{
-   	   expected.f32 = current.f32;
-           next.f32     = expected.f32 + val;
-   		current.u32  = atomic_cmpxchg( (volatile __global unsigned int *)addr, 
-                               expected.u32, next.u32);
-       } while( current.u32 != expected.u32 );
-   }
-\end{lstlisting}
-\caption{Kernel code for a solution to atomic addition with floats.}
-\label{fig:atomic_float_addition}
-\end{figure}
+\\\\This approach causes a serious problem as it is possible that multiple collision kernels will need to write data to the same particle at the same time. The solution to this is to use the atomic operations available in OpenCL. Unfortunately, OpenCL only natively supports full atomic operations for int and unsigned int data types whereas the forces are stored in a float vector. OpenCL does support an exchange atomic operator for single precision floats, but this is not the best approach for doing atomic arithmetic for floats.
+\\\\An approach for doing atomic addition (as is necessary in this case) is recommended in an online article\cite{atomic_addition}. This approach uses the comparison exchange atomic operator by creating a union of the floats with unsigned ints. This works well because the bits being exchanged are the same for the float and unsigned int and actual atomic arithmetic is not necessary so the difference between the data types does not matter. Thus the new value is calculated and if the value used to calculate it has changed in that time the calculation is repeated with the updated value.
 \subsubsection{Particle Iteration}
 Particle iteration is performed almost identically to the Python implementation. The main difference, as discussed in section \ref{sec:Collision Resolution}, is that the OpenCL implementation performs the summation of DEM forces as they are calculated in collisions whereas the Python implementation performs the summation when iterating the particle.
 \subsection{Unit Tests}
 Due to the large size of the project and algorithmic complexity, it is important to test each unit of code individually rather than trying to trace bugs through the whole code-base. In addition, this project is intended to be run on heterogeneous devices and so differences in runtime environment could cause problems. For these reasons a unit testing approach has been chosen so that tests can be quickly re-run to check code unit functionality without assuming identical behaviour between systems.
-\\Some functions are not included in the unit testing system due to their simplicity and the relatively long time it would take to program unit tests for all of them. For example, checking that a function multiplies numbers correctly does not need to be tested every time.
+\\Some functions are not included in the unit testing system due to their simplicity and the relatively long time it would take to program unit tests for all of them. For example, checking that a function multiplies numbers correctly does not need to be tested every time whereas checking that structures are correctly aligned in memory is important to test every time.
 \subsubsection{Testing Framework}
 Often a framework is used for unit testing, however there is not a quick, easy framework available for C with OpenCL so a simple system has been set up to make running tests easy.
 \\Each tested feature has a directory within the 'tests' directory with its header and C code files. A feature may have multiple functions, each with its own testing function. Each testing function takes a boolean parameter, 'verbose', that determines whether it prints intermediate results and debugging outputs. The functions return a boolean that indicates whether the test passed or not. In some cases, if a function fails, it may not be obvious why and so debugging outputs will be printed. For example, test\_assign\_particle\_count could have the wrong number of control volumes or incorrectly assigned particles so both of these outcomes has its own printed debugging output. %TODO Reference code
@@ -574,8 +554,8 @@ Often a framework is used for unit testing, however there is not a quick, easy f
 \label{sec:OpenCL verification}
 This section contains the results of the verification cases from Section \ref{sec:verification} for the OpenCL implementation. The graphs in this section compare the results of simulations against the analytic solutions. Overall, the results show that the simulation is suitably accurate and as timestep decreases the simulation accuracy increases, as expected.
 \subsection{Drag}
-This is the drag verification case from Section \ref{sec:drag verification}. The properties used are in Figure \ref{fig:opencl drag properties} and the results are shown in Figure \ref{fig:opencl_drag_verification}. The results show that the simulation results closely match the analytic solution and that the error decreases as the timestep decreases.
-\begin{figure}[!htb]
+This is the drag verification case from Section \ref{sec:drag verification}. The properties used are in Table \ref{tab:opencl drag properties} and the results are shown in Figure \ref{fig:opencl_drag_verification}. The results show that the simulation results closely match the analytic solution and that the error decreases as the timestep decreases.
+\begin{table}[!htb]
 \centering
 \begin{tabular}{| c c |}
 \hline
@@ -588,8 +568,8 @@ $x$ Fluid Velocity $u_f$ & 1 $m/s$ \\
 \hline
 \end{tabular}
 \caption{Properties used in the OpenCL drag verification case.}
-\label{fig:opencl drag properties}
-\end{figure}
+\label{tab:opencl drag properties}
+\end{table}
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.5]{figures/opencl_verification/drag_verification.png}
@@ -597,8 +577,8 @@ $x$ Fluid Velocity $u_f$ & 1 $m/s$ \\
 \label{fig:opencl_drag_verification}
 \end{figure}
 \subsection{Normal Collision}
-This is the normal collision verification case from Section \ref{sec:normal collision verification}. The properties used are in Figure \ref{fig:opencl normal collision properties} and the results are shown in \ref{fig:opencl_normal_force_verification}. The results show that the simulation results closely match the analytic solution and that the error decreases as the timestep decreases.
-\begin{figure}[!htb]
+This is the normal collision verification case from Section \ref{sec:normal collision verification}. The properties used are in Table \ref{tab:opencl normal collision properties} and the results are shown in \ref{fig:opencl_normal_force_verification}. The results show that the simulation results closely match the analytic solution and that the error decreases as the timestep decreases.
+\begin{table}[!htb]
 \centering
 \begin{tabular}{| c c |}
 \hline
@@ -612,8 +592,8 @@ Particle Diameter $d_b$ & 0.1 $m$ \\
 \hline
 \end{tabular}
 \caption{Properties used in the OpenCL normal collision verification case.}
-\label{fig:opencl normal collision properties}
-\end{figure}
+\label{tab:opencl normal collision properties}
+\end{table}
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.5]{figures/opencl_verification/normal_force_verification.png}
@@ -621,8 +601,8 @@ Particle Diameter $d_b$ & 0.1 $m$ \\
 \label{fig:opencl_normal_force_verification}
 \end{figure}
 \subsection{Friction Sliding}
-This is the normal collision verification case from Section \ref{sec:friction sliding verification}. The properties used are in Figure \ref{fig:opencl friction sliding properties} and the results are shown in Figure \ref{fig:opencl_friction_verification}. The results show that the simulation results closely match the analytic solution. The error generally decreases as the timestep decreases but it is unpredictable. The results show that the position error is actually higher for a timestep of $t_{collision}/64$ than for a timestep of $t_{collision}/32$. However, the results are accurate enough for the purpose of this simulation.
-\begin{figure}[!htb]
+This is the normal collision verification case from Section \ref{sec:friction sliding verification}. The properties used are in Table \ref{tab:opencl friction sliding properties} and the results are shown in Figure \ref{fig:opencl_friction_verification}. The results show that the simulation results closely match the analytic solution. The error generally decreases as the timestep decreases but it is unpredictable. The results show that the position error is actually higher for a timestep of $t_{collision}/64$ than for a timestep of $t_{collision}/32$. However, the results are accurate enough for the purpose of this simulation.
+\begin{table}[!htb]
 \centering
 \begin{tabular}{| c c |}
 \hline
@@ -640,8 +620,8 @@ Friction Stiffness $k_f$ & 1e5 $N/m$ \\
 \hline
 \end{tabular}
 \caption{Properties used in the OpenCL friction sliding verification case.}
-\label{fig:opencl friction sliding properties}
-\end{figure}
+\label{tab:opencl friction sliding properties}
+\end{table}
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.4]{figures/opencl_verification/friction_verification.png}
@@ -650,8 +630,8 @@ Friction Stiffness $k_f$ & 1e5 $N/m$ \\
 \label{fig:opencl_friction_verification}
 \end{figure}
 \subsection{Normal Collision with Cohesion}
-This is the normal collision with cohesion verification case from Section \ref{sec:normal collision with cohesion verification}. The properties used are in Figure \ref{fig:opencl normal collision with cohesion properties} and the results are shown in \ref{fig:opencl_normal_force_verification}. The results show that the simulation results closely match the analytic solution and that the error decreases as the timestep decreases. Notably, the error causes overshoot on the position so particles are less likely to stick in a simulation than they would in the analytic solution.
-\begin{figure}[!htb]
+This is the normal collision with cohesion verification case from Section \ref{sec:normal collision with cohesion verification}. The properties used are in Table \ref{tab:opencl normal collision with cohesion properties} and the results are shown in \ref{fig:opencl_normal_force_verification}. The results show that the simulation results closely match the analytic solution and that the error decreases as the timestep decreases. Notably, the error causes overshoot on the position so particles are less likely to stick in a simulation than they would in the analytic solution.
+\begin{table}[!htb]
 \centering
 \begin{tabular}{| c c |}
 \hline
@@ -667,8 +647,8 @@ Particle Effect Diameter $d_e$ & 0.15 $m$ \\
 \hline
 \end{tabular}
 \caption{Properties used in the OpenCL normal collision with cohesion verification case.}
-\label{fig:opencl normal collision with cohesion properties}
-\end{figure}
+\label{tab:opencl normal collision with cohesion properties}
+\end{table}
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.5]{figures/opencl_verification/cohesion_verification.png}
@@ -677,17 +657,17 @@ Particle Effect Diameter $d_e$ & 0.15 $m$ \\
 \end{figure}
 \section{Optimization and Performance}
 \subsection{Optimizations}
+Only preliminary optimization has been performed for this implementation as it is not a focus of the project. The optimization efforts have focussed on reducing unnecessary calculations, reducing the number of atomic operations, and avoiding memory transfers between host and device where possible.
 \subsection{Performance}
 Govender et al. have also developed GPU based DEM implementations and have provided performance measures in one of their papers\cite{performance}. The key performance measure they use is the Cundall Number. The Cundall Number is defined in Equation \ref{eq:cundall number} where $N$ is the number of particles and $FPS$ is the number of simulation frames that can be calculated in a second. The simulations performed in Govender et al.\cite{performance} were run on an NVIDIA Quadro K6000 GPU with an Intel i7 3.5 GHZ Extreme Edition CPU. The benchmarks for this project have been run on an NVIDIA Quadro P5000 GPU with an  Intel Xeon 3.5 GHz CPU.
-\\To calculate the C Number of this project a 10 million particle simulation has been run with a timestep of 0.0005 seconds and a simulation length of 5 seconds. This simulation ran in 145.22 minutes yielding an $FPS$ of 1.148. This gives an overall C Number of $11.5 \times 10^6$.
-\\The table in Figure \ref{fig:performance comparison} compares this project with Govender et al.\cite{performance}. It shows that Govender et al. have achieved significantly better performance. In addition, Govender et al. have improved their performance in a later paper\cite{blazedem}.
-\\\\Although greater performance has been achieved in other codes, this project has achieved satisfactory performance. With further optimization, and implementation of more complex algorithms, it is conceivable that similar performance could be achieved.
+\\\\To calculate the C Number of this project a 10 million particle simulation has been run with a timestep of 0.0005 seconds and a simulation length of 5 seconds. This simulation ran in 145.22 minutes yielding an $FPS$ of 1.148. This gives an overall C Number of $11.5 \times 10^6$.
+\\\\Table \ref{tab:performance comparison} compares this project with Govender et al.\cite{performance}. It shows that Govender et al. have achieved significantly better performance. In addition, Govender et al. have improved their performance in a later paper\cite{blazedem}. Although greater performance has been achieved in other codes, this project has achieved satisfactory performance. With further optimization, and implementation of more complex algorithms, it is conceivable that similar performance could be achieved.
 \begin{equation}
 C = N \times FPS
 \label{eq:cundall number}
 \end{equation}
 
-\begin{figure}
+\begin{table}
 \begin{center}
 \begin{tabular}{|c c c c|}
 \hline
@@ -700,10 +680,10 @@ BLAZE-DEM\cite{blazedem} & Sphere & $32 \times 10^6$ & $100 \times 10^6$ \\
 \end{tabular}
 \end{center}
 \caption{Performance comparison with another GPU DEM code.}
-\label{fig:performance comparison}
-\end{figure}
+\label{tab:performance comparison}
+\end{table}
 \subsection{Run time linearity}
-One key objective of particle simulations with collisions is to reduce the simulation run time from $O(N^2)$ to $O(N)$. To assess this performance, simulations with increasing numbers of particles have been run. Notably, these simulations have logging to file disabled assess the algorithm performance only. Figure \ref{fig:opencl_performance} shows the results of these runs. The results show that the simulation is very close to being linear. At high numbers of particles the non-linearity is more evident, but still remains close to the extrapolated line.
+One key objective of particle simulations with collisions is to reduce the simulation run time from $O(N^2)$ to $O(N)$. To assess this performance, simulations with increasing numbers of particles have been run. Notably, these simulations have logging to file disabled in order to assess the algorithm performance only. Figure \ref{fig:opencl_performance} shows the results of these runs. The results show that the simulation is very close to being linear. At high numbers of particles the non-linearity is more evident, but still remains close to the extrapolated line.
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.7]{figures/opencl_performance.png}
@@ -712,10 +692,10 @@ One key objective of particle simulations with collisions is to reduce the simul
 \end{figure}
 \chapter{Application}
 \label{ch:Application}
-An agglomerate is a group of particles held together by cohesive forces. Agglomerates can be formed from electrostatically charged dust, magnetic particles, or a variety of other forces. When designing devices that handle cohesive particles it is important to understand agglomeration behaviour in varying conditions. The simulation tool developed in this project can be applied to studying this behaviour. The two properties that are examined in this chapter are the Stokes Number (see Section \ref{sec:stokes number}) and the Stickiness Number (see Section \ref{sec:stickiness number}).
+An agglomerate is a group of particles held together by cohesive forces. Agglomerates can be formed from electrostatically charged dust, magnetic particles, or a variety of other forces. When designing anything that handles cohesive particles it is important to understand agglomeration behaviour. The simulation tool developed in this project can be applied to studying this behaviour. The two properties that are examined in this chapter are the Stokes Number (see Section \ref{sec:stokes number}) and the Stickiness Number (see Section \ref{sec:stickiness number}).
 \section{Simulation Setup}
-The simulation uses a Taylor-Green Vortex fluid flow field (see Section \ref{sec:tgv flow}). It is a relatively simple flow field that can be easily set to fit a cubic domain boundary. It also works well for bringing particles together so that collisions are more frequent than a stationary fluid. In addition it is a constant source of additional energy so that the particles do not simply lose energy and eventually stay at rest.
-\\\\The simulation uses periodic boundary conditions such that if a particle were to leave the domain it re-enters the domain on the opposite side. This provides a decent approximation of a larger domain with more particles by assuming that the simulation domain is representative of a larger domain as a whole.
+The simulation uses a Taylor-Green Vortex fluid flow field (see Section \ref{sec:tgv flow}). It is a relatively simple flow field that can be easily set to fit a cubic domain boundary. It also works well for bringing particles together so that collisions are more frequent than a stationary fluid. It is a constant source of additional energy so that the particles do not simply lose energy and eventually stay at rest.
+\\\\The simulation uses periodic boundary conditions such that if a particle were to leave the domain it re-enters the domain on the opposite side. This provides a decent approximation of a larger domain with more particles by assuming that the simulation domain is representative of the larger domain as a whole.
 \\\\Section \ref{sec:tgv flow} describes in more detail the mathematical setup of a Taylor-Green Vortex flow. Section \ref{sec:stokes number} defines the Stokes Number and how it is varied in the simulation. Section \ref{sec:stickiness number} defines the Stickiness Number and how it is varied in the simulation. Section \ref{sec:simulation properties} defines all of the constant properties used in the simulation. Section \ref{sec:initial conditions} defines the initial conditions of the simulation.
 \subsection{Taylor-Green Vortex Flow}
 \label{sec:tgv flow}
@@ -734,7 +714,7 @@ w &= -2A sin\Big(a\Big(x + \dfrac{\pi}{2a}\Big)\Big)sin\Big(a\Big(y + \dfrac{\pi
 \subsection{Stokes Number}
 \label{sec:stokes number}
 The Stokes Number, Stk, describes how a particle moves through a fluid. A high Stokes Number indicates an inertial regime where a particle is relatively unaffected by the fluid. A low Stokes Number indicates a viscous flow regime where the particle closely follows the fluid. A Stokes Number around 1 is in a transitional regime between viscous and inertial. This is shown in Figure \ref{fig:stokes_number}. The Stokes Number for a particle in Stokes flow is defined as in Equation \ref{eq:stokes_number}\cite{achow}.
-\\For the Taylor-Green Vortex flow used in these simulations, $l_0$ is the diameter of one of the vortices and $u_0$ is the average fluid flow speed $u_{f,avg}$. Chow\cite{achow} calculated that the average flow speed for Taylor-Green Vortex flow is $u_{f,avg} = 0.7839A$.
+\\For the Taylor-Green Vortex flow used in these simulations $l_0$ is the diameter of one of the vortices and $u_0$ is the average fluid flow speed $u_{f,avg}$. Chow\cite{achow} calculated that the average flow speed for Taylor-Green Vortex flow is $u_{f,avg} = 0.7839A$.
 \begin{equation}
 Stk = \dfrac{\rho_p d_p^2 u_0}{18 \mu l_0}
 \label{eq:stokes_number}
@@ -759,8 +739,8 @@ Sy &< 1 \textit{ Does not stick}
 \end{align*}
 For the general case, lower Stickiness Numbers cause the particles to be less likely to stay together and higher Stickiness Numbers cause the particles to be more likely to stay together. Stickiness Numbers in the range $0 < Sy < 1.5$ are common, higher Stickiness Numbers are uncommon with normal parameters.
 \subsection{Simulation Properties}
-This section contains the constant properties used in the simulations. Note that, due to the long simulation durations, the timestep is only $t_{collision} / 8$. Although this is not of the highest accuracy, it does allow for longer simulations and for more data points to be collected. Absolute accuracy is not as important since the focus of these simulations is to see how agglomerates vary with different properties. A smaller timestep would be recommended if these simulations were required to predict specific outcomes of real scenarios.
-\begin{figure}[!htb]
+The constant properties used in the simulations are in Table \ref{tab:simulation properties}. The properties used to achieve chosen Stickiness Numbers and Stokes Numbers are in Tables \ref{tab:stickiness properties} and \ref{tab:stokes properties}, respectively. Note that, due to the long simulation durations, the timestep is only $t_{collision} / 8$. Although this is not of the highest accuracy, it does allow for longer simulations and for more data points to be collected. Absolute accuracy is not as important since the focus of these simulations is to observe how agglomerates vary with different properties. A smaller timestep would be recommended if these simulations were required to predict specific outcomes of real scenarios.
+\begin{table}[!htb]
 \centering
 \begin{tabular}{| c c |}
 \hline
@@ -771,6 +751,7 @@ Stiffness $k_e$ & 1e5 $N/m$ \\
 Cohesion Stiffness $k_c$ & 100 $N/m$ \\
 Particle Density $\rho$ & 2000 $kg/m^3$ \\
 Particle Diameter $d_b$ & 0.05 $m$ \\
+Effect Diameter $d_e$ & 0.075 $m$ \\
 Coefficient of Friction $\mu$ & 0.1 \\
 Friction Stiffness $k_f$ & 1e5 $N/m$ \\
 Domain Length & $2\pi$ $m$ \\
@@ -779,12 +760,39 @@ Timestep $\Delta t$ & $t_{collision} / 8 = 0.000449$ $s$ \\
 Simulation Length & 600 $s$ \\
 \hline
 \end{tabular}
-\caption{Properties used in the Python friction sliding verification case.}
-\label{fig:simulation properties}
-\end{figure}
+\caption{Constant properties used in the simulations.}
+\label{tab:simulation properties}
+\end{table}
+\begin{table}[!htb]
+\centering
+\begin{tabular}{| c c c c c c |}
+\hline
+& \multicolumn{4}{c}{Stickiness Number} &\\
+Property & 0.1 & 0.6 & 1.0 & 1.5 & \\
+\hline
+Coefficient of Restitution $\epsilon$ & 0.5 & 0.2 & 0.174 & 0.15 & \\
+Cohesion Stiffness $k_c$ & 8.06 & 47.01 & 100.0 & 117.24 & \\
+\hline
+\end{tabular}
+\caption{Properties used to achieve chosen Stickiness Numbers.}
+\label{tab:stickiness properties}
+\end{table}
+\begin{table}[!htb]
+\centering
+\begin{tabular}{| c c c c c c |}
+\hline
+& \multicolumn{4}{c}{Stokes Number} &\\
+Property & 0.1 & 1.0 & 5.0 & 10.0 & \\
+\hline
+Fluid Viscosity $\mu$ & 10.40 & 1.040 & 0.2080 & 0.1040 & \\
+\hline
+\end{tabular}
+\caption{Properties used to achieve chosen Stokes Numbers.}
+\label{tab:stokes properties}
+\end{table}
 \label{sec:simulation properties}
 \subsection{Initial Conditions}
-The particles are initially arranged in a cubic formation in the centre of the domain as shown in Figure \ref{fig:initial_positions}. The particles are at intervals of approximately $3d_b$. Each particle has a small random offset to avoid the results being affected by an unrealistically ordered system (this problem has been encountered in other simulations). The particles are given initial velocities with random directions and random speeds. The speeds are distributed with a mean of $1 m/s$ and standard deviation of $0.1 m/s$. The directions are evenly distributed.
+The particles are initially arranged in a cubic formation in the centre of the domain as shown in Figure \ref{fig:initial_positions}. The particles are at intervals of approximately $3d_b$. Each particle has a small random offset to avoid the results being affected by an unrealistically ordered system (this has been encountered in other simulations). The particles are given initial velocities with random directions and random speeds. The speeds are distributed with a mean of $1 m/s$ and standard deviation of $0.1 m/s$. The directions are evenly distributed.
 \begin{figure}[!htb]
 \centering
 \includegraphics[scale=0.4]{figures/initial_positions.png}
@@ -792,21 +800,91 @@ The particles are initially arranged in a cubic formation in the centre of the d
 \label{fig:initial_positions}
 \end{figure}
 \label{sec:initial conditions}
-\section{Results}
-\textit{Presentation of results, graphs etc.}
-\section{Discussion}
-\textit{Discussion of results including key relationships and conclusions.}
+\section{Results and Analysis}
+\subsection{Definitions}
+The two main statistics that are measured from the results of these simulations are the mean agglomerate size and the mean void fraction.
+\subsubsection{Agglomerate Size}
+The agglomerate size is the number of particles in an agglomerate. Particles are considered to be in an agglomerate when they are in contact with other particles in the agglomerate. Particles interacting with cohesive forces are not considered to be part of an agglomerate until they are in contact.
+\subsubsection{Void Fraction}
+The void fraction of an agglomerate is defined as the fraction of a bounding sphere's volume that does not contain particles. The bounding sphere is defined as the smallest sphere into which the agglomerate can fit, as shown in Figure \ref{fig:bounding sphere}. The void fraction can be calculated with Equation \ref{eq:void fraction} where $\sum V_{p}$ is the sum of the particle volumes and $V_{bs}$ is the volume of the bounding sphere. This is a useful statistic because it provides some insight into the structure of an agglomerate. A high void fraction means that the agglomerate has a lower density and so is likely longer and thinner. A low void fraction indicates a tightly packed spherical agglomerate.
+\begin{equation}
+\text{Void Fraction} = 1 - \dfrac{\sum V_{p}}{V_{bs}}
+\label{eq:void fraction}
+\end{equation}
+\begin{figure}[!htb]
+\centering
+\input{figures/bounding_sphere.tex}
+\caption{The bounding sphere of an agglomerate.}
+\label{fig:bounding sphere}.
+\end{figure}
+\subsection{General Behaviour}
+In general the simulations show that the particles initially spread out but are drawn together at the `corners' of the vortices. Particles begin to bunch up in these areas and form agglomerates. The sizes and shapes of the agglomerates that form depend on the Stokes and Stickiness numbers.
+\\\\Figure \ref{fig:agglomerate locations} shows how the particles are arranged in the flow. The particle traces show where the vortices are located. By comparing this with Figure \ref{fig:tgv_plot} it is evident that the agglomerates are formed where the flow comes together in the corners of the vortices and are elongated by the flow then pulling them apart.
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.6]{figures/low_stokes_agglomerates.png}
+\caption{A 2D projection of agglomerates in a Taylor-Green Vortex Flow with particle traces to show the locations of the vortices.}
+\label{fig:agglomerate locations}
+\end{figure}
+\\\\To determine the effect of changes in properties the simulation must reach a statistically static state. Agglomerates may continue forming and breaking up, but the mean size and void fraction should tend to some value. This behaviour is shown in Figure \ref{fig:statistically static}.
+\\\\For some simulations a fully statistically static state was not achieved. In some cases there was a rapid increase in mean size and void fraction at the end of the simulation and in others the statistics had not settled completely. These effects can be seen in Figure \ref{fig:end increase}. To reduce the impact of this on the final values the overall value for the mean size and mean void fraction have been determined by finding an average of each property between $t = 500s$ and $t = 550s$. This provides more stable results for later analysis. Further analysis could be performed to ascertain the causes of these effects, however the results of these simulations are sufficient to determine the general trends in the simulations.
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.6]{figures/analysis/statistically_static.png}
+\caption{Mean and standard deviation graphs for agglomerate size and void fraction in a simulation with $Stk = 5$ and $Sy = 1.5$. These graphs show the simulation coming to a statistically static state.}
+\label{fig:statistically static}
+\end{figure}
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.6]{figures/analysis/end_increase.png}
+\caption{Mean and standard deviation graphs for agglomerate size and void fraction in a simulation with $Stk = 1$ and $Sy = 0.1$. These graphs show how a statistically static state is not always perfectly achieved.}
+\label{fig:end increase}
+\end{figure}
+\subsection{Variation with Stokes and Stickiness}
+\label{sec:variation with properties}
+Simulations were performed with Stokes Numbers of 0.1, 1, 5, and 10 and Stickiness Numbers of 0.1, 0.6, 1, and 1.5. Figure \ref{fig:mean size 3d} shows the results of these simulations, graphed as mean size and mean void fraction.
+\subsubsection{Size}
+The graph of mean size shows that for small Stokes Numbers the agglomerate size is very large. This is because the particles are very quickly brought together by the vortices and then stay together due to the Stickiness. The agglomerate size is thus influenced by the initial conditions, this effect is discussed further in Section \ref{sec:variation with initial conditions}. For the lowest Stickiness Number value the agglomerate size is very small, this is where very few agglomerates are formed because the cohesion force is not strong enough.
+\\\\For larger Stokes Numbers the particles are more free to move around. The general trend is that the mean agglomerate size increases as the Stokes Number increases and also increases as the Stickiness Number increases.
+\subsubsection{Void Fraction}
+The graph of mean void fraction shows similar trends. The void fraction of agglomerates for low Stokes Numbers is quite high, except for very low Stickiness Numbers. For low Stickiness Numbers there are very few agglomerates and so the void fraction is decreased by the many particles that are on their own and thus have a void fraction of 0.
+\\\\For higher Stokes Numbers the void fraction increases with Stokes Number, however the trend with Stickiness Numbers is less clear. More data points would be required to draw any clear conclusions from the Stickiness Number trends.
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.55]{figures/analysis/mean_size_3d.png}
+\includegraphics[scale=0.55]{figures/analysis/void_fraction_3d.png}
+\caption{Graphs of mean size (left) and mean void fraction (right) against varying Stokes Number and Stickiness Number.}
+\label{fig:mean size 3d}
+\end{figure}
+\subsection{Variation with Initial Conditions}
+\label{sec:variation with initial conditions}
+Some simulations with high Stickiness Numbers ($Sy = 1.5$) were performed with different initial distributions of particles. At high Stokes Numbers, where the particles were in the inertial regime, this had no effect on the results. However, at low Stokes Numbers, where the particles were in the viscous regime, this had a significant effect because the particles are very quickly drawn together by the flow and rapidly form stable agglomerates due to the high Stickiness Number. With a smaller initial spread of particles the agglomerates are much larger because the particles are drawn to the same vortex corners. With a larger initial spread of particles the agglomerates are much smaller because the particles are drawn to vortex corners further apart. This effect is clearly observable in Figure \ref{fig:initial spread}. This effect also causes the void fraction to be lower because the particles form more spherical agglomerates due to the larger size.
+\begin{figure}[!htb]
+\centering
+\includegraphics[scale=0.35]{figures/analysis/tight_0.png}
+\includegraphics[scale=0.35]{figures/analysis/tight_60.png}
+\includegraphics[scale=0.35]{figures/analysis/spread_0.png}
+\includegraphics[scale=0.35]{figures/analysis/spread_60.png}
+\caption{Two sets of simulations with different initial particle spreads. Left images are at $t = 0$, Right images are at $t = 60$. The top (blue) images are for a small initial spread and the bottom (red) images are for a larger initial spread. For these simulations $Stk = 1$ and $Sy = 1.5$.}
+\label{fig:initial spread}
+\end{figure}
+\section{Recommendations for Future Analysis}
+Section \ref{sec:variation with initial conditions} shows that the results for low Stokes Numbers are very sensitive to initial conditions. Further analysis of this sensitivity would be valuable. It would likely be most useful to distribute particles evenly across the domain. Giving the particles the local flow velocity as their initial velocity could also improve the predictability of the results.
+\\\\Further analysis of variation of agglomerate properties with a variation in Stokes Number and Stickiness Number would be especially interesting in the ranges $0 < Stk < 5$ and $0 < Sy < 0.6$. This is the area with the most variation and likely contains the most interesting insights into agglomerate formation.
 \chapter{Conclusion}
-\textit{Overall conclusions from the project. This will likely include some discussion of the successes of the programs as well as a summary of the application results.}
+This project has successfully met all of its aims and objectives from Section \ref{sec:aims and objectives}. A simple particle simulation was developed with Python and provided some useful insights into how the DEM works and how best to implement it. A GPU based particle simulation was developed using OpenCL and was capable of running simulations with large numbers of particles. This simulation was then used to observe how agglomerates form with varying simulation properties. The analysis provides a strong basis for future analysis of agglomerate formation in Taylor-Green Vortex flow.
 \section{Further Work}
-\subsection{Particle Rotation}
+\subsection{Simulation Improvements}
+\subsubsection{Particle Rotation}
 The DEM implementations in this project do not consider particle rotation. Future work could implement particle rotations to improve the simulation accuracy and give the simulation broader applicability. It is recommended that rotations be implemented using quaternions rather than Euler angles. Quaternions avoid problems such as gimbal lock and simplify rotation calculations.
-\subsection{Polyhedral Particles}
+\subsubsection{Polyhedral Particles}
 This project only considers spherical particles, an implementation of polyhedral particles could give the simulation broader applicability. This would require particle rotation to be considered but would allow for analysis of more complex particle populations and more varied simulation parameters.
-\subsection{Collision Detection Algorithms}
+\subsubsection{Collision Detection Algorithms}
 The spatial zoning algorithm in this project is simple but is not the most efficient algorithm available. Other algorithms, such as triangulation\cite{dynamictriangulations}, could be implemented to improve the efficiency of the simulation. More advanced algorithms could also simplify the implementation of better models, particularly friction models, that require collision history.
-\subsection{Particle-Fluid Interaction}
+\subsubsection{Particle-Fluid Interaction}
 This project assumes that the particle does not significantly affect the fluid, this vastly simplifies the simulation. However, particle interaction with the fluid could affect how the particles move and how groups of particles affect each other through the fluid. This would require a computational fluid dynamics code to be built into the simulation.
+\subsection{Additional Analysis}
+Additional analysis of agglomeration behaviour in Taylor-Green Vortex flow could be of value. Observing how agglomerates form with other properties, for example, could lead to a greater understanding of the overall system. Some interesting properties to vary would be the size of the vortices, the standard deviation of particle masses, and variation of initial conditions.
 \appendix
 \chapter{Derivations}
 \label{ch:Derivations}

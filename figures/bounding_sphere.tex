@@ -1,0 +1,21 @@
+\begin{tikzpicture}
+
+\draw  (-0.5,2.5) ellipse (0.25 and 0.25);
+\draw  (-1,2.5) ellipse (0.25 and 0.25);
+\draw  (-0.75,2.95) ellipse (0.25 and 0.25);
+\draw  (-1.25,2.95) ellipse (0.25 and 0.25);
+\draw  (-0.3,2.05) ellipse (0.25 and 0.25);
+\draw  (0,2.45) ellipse (0.25 and 0.25);
+\draw  (-0.8,2.05) ellipse (0.25 and 0.25);
+\draw  (0.15,1.85) ellipse (0.25 and 0.25);
+\draw  (0.45,2.25) ellipse (0.25 and 0.25);
+\draw [dashed] (-0.44,2.5) ellipse (1.18 and 1.18);
+\node (v1) at (1.5,3) {};
+\node (v2) at (2.5,3) {};
+\node (v3) at (1.5,2) {};
+\node (v4) at (2.5,2) {};
+\draw  (v1) edge (v2);
+\draw  [dashed] (v3) edge (v4);
+\node at (4.5,3) {Particle Body Surface};
+\node at (4.15,2) {Bounding Sphere};
+\end{tikzpicture}
