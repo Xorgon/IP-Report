@@ -202,7 +202,7 @@ In a real elastic collision there will be some deformation of the particles. Cal
 \subsection{Tangential Contact Force}
 \label{sec:tangential contact force}
 The tangential contact force is the friction between two particle surfaces. There are two regimes of friction force, static and dynamic. In the static regime there is no tangential motion and the friction acts to stop motion. In the dynamic regime two surfaces are sliding across one another and the friction acts to arrest this motion. The static regime usually has a higher friction coefficient than the dynamic regime. The simplest and least computationally expensive model for friction is a 'complex friction model'. This calculates values for both of the regimes and applies the minimum of the two calculations.\cite{tuley}
-\\\\Tuley\cite{tuley} mentions two common static friction models, one without damping and one with damping. These are shown in Equation \ref{eq:static friction} and Equation \ref{eq:static friction with damping} where $k_f$ is the friction stiffness, $\zeta$ is the tangential displacement during the interaction, $\mathbf{\hat{t}}$ is the unit vector tangential to the collision, $\eta$ is the damping coefficient, and $\mathbf{u}_t$ is the velocity tangential to the collision. The merit of these models is discussed in section \ref{sec:friction model}.
+\\\\Tuley\cite{tuley} mentions two common static friction models, one without damping and one with damping. These are shown in Equation \ref{eq:static friction} and Equation \ref{eq:static friction with damping} where $k_f$ is the friction stiffness, $\zeta$ is the tangential displacement during the interaction, $\mathbf{\hat{t}}$ is the unit vector tangential to the collision, $\eta$ is the damping coefficient, and $\mathbf{u}_t$ is the velocity tangential to the collision. The merit of these models is discussed in Section \ref{sec:friction model}.
 \begin{equation}
 \mathbf{F}_{t}^{static} = - k_{f} \zeta \mathbf{\hat{t}}
 \label{eq:static friction}
@@ -247,7 +247,7 @@ The gravity force is simple and defined in Equation \ref{eq:gravitational force}
 \mathbf{F}_{g} = m \mathbf{g}
 \end{equation}
 \section{Equations of Motion}
-The motion of particles in the simulation is governed by Equation \ref{eq:acceleration}. This is derived from Newton's Second Law of motion. The total force, $\mathbf{F}$ is a combination of forces as shown in Equation \ref{eq:total force}. $\mathbf{F}_{n}$, $\mathbf{F}_{t}$, $\mathbf{F}_{c}$, $\mathbf{F}_{g}$, and $\mathbf{F}_{d}$ are the forces defined in section \ref{sec:DEM Forces}.
+The motion of particles in the simulation is governed by Equation \ref{eq:acceleration}. This is derived from Newton's Second Law of motion. The total force, $\mathbf{F}$ is a combination of forces as shown in Equation \ref{eq:total force}. $\mathbf{F}_{n}$, $\mathbf{F}_{t}$, $\mathbf{F}_{c}$, $\mathbf{F}_{g}$, and $\mathbf{F}_{d}$ are the forces defined in Section \ref{sec:DEM Forces}.
 \begin{equation}
 \dfrac{d\mathbf{x}}{dt} = \mathbf{u}
 \label{eq:position}
@@ -274,7 +274,7 @@ F_1 &= m_1 a_1 \nonumber \text{, } F_2 = m_2 a_2 \nonumber
 \\F_2 &= \Big(\dfrac{m_1 m_2}{m_1 + m_2}\Big) a_{rel} \label{eq:relative acceleration}
 \\m_{reduced} &= \dfrac{m_1 m_2}{m_1 + m_2} \label{eq:reduced mass}
 \end{align}
-It should be noted that Equation \ref{eq:reduced mass} reduces to $m_1$ if $m_2$ tends to infinity. This is useful when considering static particles with infinite density and is used extensively for verifying simulation results (see section \ref{sec:verification}).
+It should be noted that Equation \ref{eq:reduced mass} reduces to $m_1$ if $m_2$ tends to infinity. This is useful when considering static particles with infinite density and is used extensively for verifying simulation results (see Section \ref{sec:verification}).
 \subsection{Collision Duration}
 \label{sec:collision duration}
 The collision duration is the time it takes for a collision to occur. This is important because if the simulation timestep is not low enough there will not be enough steps within a collision to produce accurate results. The collision duration is fully derived in Section \ref{der:collision duration} and is calculated using Equation \ref{eq:collision duration}. The collision duration is often simplified to Equation \ref{eq:simplified collision duration}.
@@ -348,7 +348,7 @@ Equation \ref{eq:implicit next velocity} can be rearranged to be in the same for
 u_{n+1} = u_n + \Big(\dfrac{u_f - u_n + \tau F_{fixed} / m}{\tau + \Delta t}\Big)\Delta t
 \label{eq:rearranged implicit next velocity}
 \end{equation}
-A comparison of the accuracy of these integration schemes is in section \ref{sec:integration scheme comparison}.
+A comparison of the accuracy of these integration schemes is in Section \ref{sec:integration scheme comparison}.
 \subsection{Position}
 Equation \ref{eq:position} is a very simple differential equation that can be solved by integrating. Since the velocity does not directly depend on the position, and the velocity for the next iteration is calculated before the position, it is trivial to use the trapezoidal rule to calculate position. It has all of the advantages of accuracy without the disadvantage of increased complexity. The position can thus be calculated with Equation \ref{eq:iterative position}.
 \begin{equation}
@@ -414,7 +414,7 @@ The drag verification case is a particle in a fluid. The fluid has a constant ve
 \subsection{Normal Collision}
 \label{sec:normal collision verification}
 The normal collision verification case is the most simple normal collision. The first particle (p1) has infinite density and so is fixed in space. The second particle (p2) has an initial velocity, $u_0$, towards the first particle and starts at $x = d_b$ so that the body surfaces are just touching. There is no drag, no gravity, and no cohesion. This arrangement is depicted in Figure \ref{fig:normal collision}.
-\\The position and velocity of the second particle are determined by Equations \ref{eq:normal collision position} and \ref{eq:normal collision velocity}, respectively. These equations are derived in section \ref{der:normal collision}.
+\\The position and velocity of the second particle are determined by Equations \ref{eq:normal collision position} and \ref{eq:normal collision velocity}, respectively. These equations are derived in Section \ref{der:normal collision}.
 \begin{align}
 &x = e^{at} \dfrac{u_0}{b} sin(bt) + d_b \label{eq:normal collision position} \\
 &\dot{x} = u_0 e^{at} (\dfrac{a}{b} sin(bt) + cos(bt)) \label{eq:normal collision velocity} \\
@@ -442,8 +442,8 @@ The analytic solution to this case uses the dynamic friction only but is suffici
 \end{figure}
 \subsection{Normal Collision with Cohesion}
 \label{sec:normal collision with cohesion verification}
-The cohesion collision verification case is very similar to the normal collision verification case (section \ref{sec:normal collision verification}). The first particle (p1) has infinite density and so is fixed in space. The second particle (p2) has an initial velocity, $u_0$, towards the first particle and starts at $x = d_e$ so that the effect surfaces are just touching. There is no drag and no gravity. This arrangement is depicted in Figure \ref{fig:cohesion collision}.
-\\The position and velocity of the second particle are determined by the set of equations below. These equations are derived in section \ref{der:normal collision with cohesion}.
+The cohesion collision verification case is very similar to the normal collision verification case (Section \ref{sec:normal collision verification}). The first particle (p1) has infinite density and so is fixed in space. The second particle (p2) has an initial velocity, $u_0$, towards the first particle and starts at $x = d_e$ so that the effect surfaces are just touching. There is no drag and no gravity. This arrangement is depicted in Figure \ref{fig:cohesion collision}.
+\\The position and velocity of the second particle are determined by the set of equations below. These equations are derived in Section \ref{der:normal collision with cohesion}.
 \begin{align}
 &\text{When $d_e > x > d_b, u < 0$:} \nonumber \\
 &x = u_0 \sqrt{\dfrac{m}{k_c}} sinh\Big(t\sqrt{\dfrac{k_c}{m}}\Big) + d_e \\
@@ -584,7 +584,7 @@ The main computational device in a computer is the Central Processing Unit (CPU)
 \section{Overview}
 The main DEM implementation used in this project uses OpenCL to run on a GPU. The host code is written in C to simplify writing code for both the host and the device. More features are available in C++, however only OpenCL 2.1 has C++ kernel support and NVIDIA only supports up to OpenCL 1.2. Since one goal of using OpenCL is to allow the code to be used on multiple platforms, it does not make sense to use OpenCL 2.1.
 \\A lot of the OpenCL utility functions used in this implementation are based on code from the previous project\cite{achow}. These functions allow for easy implementation of code without having to repeat long OpenCL function calls.
-\\The code for the OpenCL implementation can be found in the DEMOranges GitHub repository\cite{DEMOranges}.
+\\\\The code for the OpenCL implementation can be found in the DEMOranges GitHub repository\cite{DEMOranges}. Technical documentation can be found in the DEMOranges GitHub wiki\cite{DEMOrangesWiki}.
 \section{Program Structure}
 \subsection{Data Structures}
 Unlike Python, C does not support objects. This means that more care must be taken in data storage. The most sensible way to store data is in structures. In this implementation structures are used as the primary storage method. There are three types of structures used: particle, wall, collision.
@@ -621,14 +621,14 @@ The collision resolution kernel is actually separated into multiple kernels for 
 \\\\This approach causes a serious problem as it is possible that multiple collision kernels will need to write data to the same particle at the same time. The solution to this is to use the atomic operations available in OpenCL. Unfortunately, OpenCL only natively supports full atomic operations for int and unsigned int data types whereas the forces are stored in a float vector. OpenCL does support an exchange atomic operator for single precision floats, but this is not the best approach for doing atomic arithmetic for floats.
 \\\\An approach for doing atomic addition (as is necessary in this case) is recommended in an online article\cite{atomic_addition}. This approach uses the comparison exchange atomic operator by creating a union of the floats with unsigned ints. This works well because the bits being exchanged are the same for the float and unsigned int and actual atomic arithmetic is not necessary so the difference between the data types does not matter. Thus the new value is calculated and if the value used to calculate it has changed in that time the calculation is repeated with the updated value.
 \subsubsection{Particle Iteration}
-Particle iteration is performed almost identically to the Python implementation. The main difference, as discussed in section \ref{sec:Collision Resolution}, is that the OpenCL implementation performs the summation of DEM forces as they are calculated in collisions whereas the Python implementation performs the summation when iterating the particle.
+Particle iteration is performed almost identically to the Python implementation. The main difference, as discussed in Section \ref{sec:Collision Resolution}, is that the OpenCL implementation performs the summation of DEM forces as they are calculated in collisions whereas the Python implementation performs the summation when iterating the particle.
 \subsection{Unit Tests}
 Due to the large size of the project and algorithmic complexity, it is important to test each unit of code individually rather than trying to trace bugs through the whole code-base. In addition, this project is intended to be run on heterogeneous devices and so differences in runtime environment could cause problems. For these reasons a unit testing approach has been chosen so that tests can be quickly re-run to check code unit functionality without assuming identical behaviour between systems.
 \\Some functions are not included in the unit testing system due to their simplicity and the relatively long time it would take to program unit tests for all of them. For example, checking that a function multiplies numbers correctly does not need to be tested every time whereas checking that structures are correctly aligned in memory is important to test every time.
 \subsubsection{Testing Framework}
 Often a framework is used for unit testing, however there is not a quick, easy framework available for C with OpenCL so a simple system has been set up to make running tests easy.
-\\Each tested feature has a directory within the 'tests' directory with its header and C code files. A feature may have multiple functions, each with its own testing function. Each testing function takes a boolean parameter, 'verbose', that determines whether it prints intermediate results and debugging outputs. The functions return a boolean that indicates whether the test passed or not. In some cases, if a function fails, it may not be obvious why and so debugging outputs will be printed. For example, test\_assign\_particle\_count could have the wrong number of control volumes or incorrectly assigned particles so both of these outcomes has its own printed debugging output. %TODO Reference code
-\\To make it easy to run these tests repeatedly 'run\_tests.c' has been created to run all of the tests and indicate which, if any, fails. A similar implementation is executed at simulation runtime to ensure that all tests are passed before starting a simulation run.
+\\Each tested feature has a directory within the 'tests' directory with its header and C code files. A feature may have multiple functions, each with its own testing function. Each testing function takes a boolean parameter, 'verbose', that determines whether it prints intermediate results and debugging outputs. The functions return a boolean that indicates whether the test passed or not. In some cases, if a function fails, it may not be obvious why and so debugging outputs will be printed. For example, test\_assign\_particle\_count could have the wrong number of control volumes or incorrectly assigned particles so both of these outcomes has its own printed debugging output.
+\\\\To make it easy to run these tests repeatedly 'run\_tests.c' has been created to run all of the tests and indicate which, if any, fails. A similar implementation is executed at simulation runtime to ensure that all tests are passed before starting a simulation run.
 \section{Verification}
 \label{sec:OpenCL verification}
 This section contains the results of the verification cases from Section \ref{sec:verification} for the OpenCL implementation. The graphs in this section compare the results of simulations against the analytic solutions. Overall, the results show that the simulation is suitably accurate and as timestep decreases the simulation accuracy increases, as expected.
@@ -998,7 +998,7 @@ Additional analysis of agglomeration behaviour in Taylor-Green Vortex flow could
 \end{align*}
 \subsection{Collision Duration}
 \label{der:collision duration}
-The duration of a collision is considered to be the time for which the particles' body surfaces are touching. For the normal collision used in section \ref{der:normal collision} this is from $t = 0$ until some $t_{col}$ when the moving particle returns to its starting position.
+The duration of a collision is considered to be the time for which the particles' body surfaces are touching. For the normal collision used in Section \ref{der:normal collision} this is from $t = 0$ until some $t_{col}$ when the moving particle returns to its starting position.
 \begin{align*}
 &\text{Let: } a = \dfrac{-\eta}{2m} \text{ and } b = \dfrac{\sqrt{4mk_e - \eta ^ 2}}{2m} \\
 &x = e^{at} \dfrac{u_0}{b} sin(bt) + d_b \\
@@ -1015,10 +1015,10 @@ The duration of a collision is considered to be the time for which the particles
 \end{align*}
 \subsection{Coefficient of Restitution}
 \label{der:coefficient of restitution}
-The coefficient of restitution, $\epsilon$, is the ratio of the speeds before ($u_0$) and after ($u_1$) the collision. Since the $x$ velocity after the collision is in the opposite direction to the $x$ velocity before the collision, $\epsilon = \dfrac{- u_1}{u_0}$. The velocity after the collision is determined by finding the velocity at $t = t_{col}$ where $t_{col}$ is the collision duration determined in section \ref{der:collision duration}.
+The coefficient of restitution, $\epsilon$, is the ratio of the speeds before ($u_0$) and after ($u_1$) the collision. Since the $x$ velocity after the collision is in the opposite direction to the $x$ velocity before the collision, $\epsilon = \dfrac{- u_1}{u_0}$. The velocity after the collision is determined by finding the velocity at $t = t_{col}$ where $t_{col}$ is the collision duration determined in Section \ref{der:collision duration}.
 \begin{align*}
-&\text{From section \ref{der:normal collision}: } \dot{x} = u_0 e^{at} (\dfrac{a}{b} sin(bt) + cos(bt)) \\
-&\text{From section \ref{der:collision duration}: } t_{col} = \dfrac{\pi}{b} \\
+&\text{From Section \ref{der:normal collision}: } \dot{x} = u_0 e^{at} (\dfrac{a}{b} sin(bt) + cos(bt)) \\
+&\text{From Section \ref{der:collision duration}: } t_{col} = \dfrac{\pi}{b} \\
 &u_1 = u_0 e^{at_{col}} (\dfrac{a}{b} sin(bt_{col}) + cos(bt_{col})) \\
 &u_1 = u_0 e^{a \pi / b} (\dfrac{a}{b} sin(\pi) + cos(\pi)) \\
 &u_1 = - u_0 e^{a \pi / b} \\
@@ -1115,7 +1115,7 @@ Two important results from this solution are the impact time ($t_i$) and impact 
 &x = e^{at} (\dfrac{u_i - ac}{b} sin(bt) + c cos (bt)) + \dfrac{k_e d_b - k_c d_e}{k_e - k_c} \\
 &\dot{x} = e^{at}\Big(\Big(\dfrac{u_i - ac}{b} a - c b\Big)sin(bt) + u_i cos(bt)\Big)
 \end{align*}
-The position cannot be analytically solved for $t$ in order to find the initial return velocity. A reasonable estimation for this is to use $t_{col} = \dfrac{\pi}{b}$, and other results, from section \ref{der:normal collision}. Thus the initial return velocity, $u_r$, can be found to be $u_r = - \epsilon u_i$.
+The position cannot be analytically solved for $t$ in order to find the initial return velocity. A reasonable estimation for this is to use $t_{col} = \dfrac{\pi}{b}$, and other results, from Section \ref{der:normal collision}. Thus the initial return velocity, $u_r$, can be found to be $u_r = - \epsilon u_i$.
 \subsection{Cohesion Only, Returning ($d_e > x > d_b, u > 0$)}
 \label{sec:cohesion only returning}
 The General Solution to the returning equation is the same as the incoming equation.
@@ -1136,7 +1136,7 @@ The General Solution to the returning equation is the same as the incoming equat
 \end{align*}
 \section{Stickiness Number}
 \label{der:stickiness number}
-Taking the results from section \ref{der:normal collision with cohesion} it is known that if the particle is to escape the collision the position, $x$, will at some point return to $d_e$. Thus, using the solution for the returning collision section (see Section \ref{sec:cohesion only returning}), the position equation can be solved for $t$:
+Taking the results from Section \ref{der:normal collision with cohesion} it is known that if the particle is to escape the collision the position, $x$, will at some point return to $d_e$. Thus, using the solution for the returning collision section (see Section \ref{sec:cohesion only returning}), the position equation can be solved for $t$:
 \begin{align*}
 &d_e = (d_b - d_e)cosh\Big(\sqrt{\dfrac{k_c}{m}} t\Big) + u_r \sqrt{\dfrac{m}{k_c}} sinh\Big(\sqrt{\dfrac{k_c}{m}}t\Big) + d_e \\
 &(d_b - d_e)cosh\Big(\sqrt{\dfrac{k_c}{m}} t\Big) + u_r \sqrt{\dfrac{m}{k_c}} sinh\Big(\sqrt{\dfrac{k_c}{m}}t\Big) = 0 \\
